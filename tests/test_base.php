@@ -19,7 +19,27 @@ use auth_plugin_imisbridge;
 use local_imisbridge\service_proxy;
 
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__.'/test_base.php');
+require_once(__DIR__.'/../auth.php');
+
+interface iServiceProxy
+{
+    public function decrypt($encrypted_text);
+
+    public function moodle_update($data);
+}
+
+class test_subject extends \auth_plugin_imisbridge
+{
+    public function get_config()
+    {
+        return parent::get_config();
+    }
+
+    public function get_imis_id_from_sso_cookie()
+    {
+        return parent::get_imis_id_from_sso_cookie();
+    }
+}
 
 /**
  * Test class for adhoc tasks.
@@ -29,17 +49,7 @@ require_once(__DIR__.'/test_base.php');
  * @copyright 2017 Learning Stacks LLC
  * @license   All Rights Reserved
  */
-class auth_imisbridge_integration_testcase extends test_base
+abstract class test_base extends \advanced_testcase
 {
-    // get_service_proxy
-    public function test_get_service_proxy()
-    {
-        $this->resetAfterTest(true);
-        $this->markTestIncomplete();
-    }
-
-    // decrypt
-
-    // get_user_info
 
 }

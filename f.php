@@ -50,7 +50,7 @@ if ($frm->is_cancelled()) {
 } else if ($data = $frm->get_data()) {
     $sso_config = get_config('auth_imisbridge');
     $courseid = optional_param('CourseID', 1, PARAM_INT);
-    $redirect = "https://terry-pc.learningstacks.com/iaff_lms32dev/course/view.php?id=$courseid";
+    $redirect = $CFG->wwwroot."/course/view.php?id=$courseid";
     $cookiename = $sso_config->sso_cookie_name;
     $cookiedomain = $sso_config->sso_cookie_domain;
     $cookiepath = $sso_config->sso_cookie_path;

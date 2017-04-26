@@ -22,12 +22,22 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/authlib.php');
 require_once($CFG->dirroot . '/user/lib.php');
+require_once($CFG->dirroot . '/user/profile/lib.php');
 
+/**
+ * Class auth_plugin_imisbridge
+ */
 class auth_plugin_imisbridge extends auth_plugin_base
 {
 
+    /**
+     *
+     */
     const COMPONENT_NAME = "auth_imisbridge";
 
+    /**
+     * auth_plugin_imisbridge constructor.
+     */
     public function __construct()
     {
         $this->authtype = 'imisbridge';
@@ -62,6 +72,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $this->redirect_to_sso_login();
     }
 
+    /**
+     * @return bool
+     */
     function prevent_local_passwords()
     {
         return false;
@@ -77,9 +90,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return false;
     }
 
+    /**
+     * @return bool
+     */
     function is_synchronised_with_external()
     {
-        return true;
+        return false;
     }
 
     /**
@@ -121,6 +137,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
     protected function get_config()
     {
         $data = get_config(self::COMPONENT_NAME);
+        $data2 = get_config('auth/' . $this->authtype);
+        $data = (object)array_merge((array)$data2, (array)$data);
 
         $default = new stdClass();
         $default->sso_login_url = '';
@@ -223,6 +241,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
     {
     }
 
+    /**
+     *
+     */
     function logoutpage_hook()
     {
         global $redirect;
@@ -234,6 +255,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $redirect = $this->config->sso_logout_url;
     }
 
+    /**
+     * @return bool|void
+     * @throws coding_exception
+     */
     public function loginpage_hook()
     {
         global $CFG, $user, $COURSE;
@@ -262,7 +287,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         if ($imis_id) {
             $user = $this->get_user_by_imis_id($imis_id);
             if ($user) {
-                $user = update_user_record_by_id($user->id);
+                $user = $this->synch_user_record($user);
                 $this->complete_user_login($user);         // Complete setting up the $USER
                 return $this->redirect($urltogo);   // Send to originally requested url
                 // redirect function will not return
@@ -277,20 +302,11 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return false;
     }
 
-    protected function update_user_profile($user)
-    {
-        $updated_user = $user;
-
-        /*
-         * Get profile details from IMIS_BRIDGE
-         * Update user record and custom fields
-         */
-//        $imis_profile = $this->get_user_profile_from_imis($user);
-//        $moodle_profile = null;
-
-        return $updated_user;
-    }
-
+    /**
+     * @param int $courseid
+     * @return bool
+     * @throws coding_exception
+     */
     protected function redirect_to_sso_login($courseid = 1)
     {
         $params = ['CourseID' => $courseid];
@@ -303,11 +319,19 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return false;
     }
 
+    /**
+     * @param moodle_url|string $url
+     * @param string|null $msg
+     * @throws moodle_exception
+     */
     protected function redirect($url, $msg = null)
     {
         redirect($url, $msg);
     }
 
+    /**
+     * @return null
+     */
     public function get_sso_cookie()
     {
         $cookie = null;
@@ -319,11 +343,17 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $cookie;
     }
 
+    /**
+     *
+     */
     protected function expire_sso_cookie()
     {
         setcookie($this->config->sso_cookie_name, "", time() - 3600, $this->config->sso_cookie_path, $this->config->sso_cookie_domain); // domain may be null
     }
 
+    /**
+     * @return null|string
+     */
     protected function get_imis_id_from_sso_cookie()
     {
         $imis_id = null;
@@ -345,6 +375,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $imis_id;
     }
 
+    /**
+     * Return a user record given an imis_id.
+     *
+     * @param string $imis_id
+     * @return mixed|null
+     */
     public function get_user_by_imis_id($imis_id)
     {
         global $DB;
@@ -362,23 +398,147 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $user;
     }
 
-    public function get_userinfo($username)
+    /**
+     * Provide a map from IMIS field names to Moodle field names.
+     *
+     * @return array
+     */
+    protected function get_field_map()
     {
-        return array();
+        $map = [];
+        include(__DIR__ . '/profile_field_map.php');
+        return $map;
     }
 
-    protected function get_service_proxy()
+    /**
+     * @param $imis_id
+     * @return array
+     */
+    protected function get_contact_info($imis_id)
+    {
+        $svc = $this->get_service_proxy();
+        $newinfo = $svc->get_contact_info($imis_id);
+        return $newinfo;
+    }
+
+    protected function get_src_value($fld, $data)
+    {
+        if (isset($this->config->{'field_map_' . $fld})) {
+            $srcname = $this->config->{'field_map_' . $fld};
+            if (isset($data[$srcname])) {
+                return $data[$srcname];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the user profile data.
+     *
+     * @param stdClass $user
+     * @return array
+     */
+    public function synch_user_record($user)
+    {
+        $origuser = get_complete_user_data('id', $user->id);
+        $newuser = array();
+        $imis_id = $origuser->idnumber;
+        $contact_info = $this->get_contact_info($imis_id);
+        $customfields = $this->get_custom_user_profile_fields();
+
+        // Map incoming date to moodle profile fields
+        $flds = array_merge($this->userfields, $customfields);
+        $newinfo = [];
+        foreach ($flds as $fld) {
+            $val = $this->get_src_value($fld, $contact_info);
+            if (!is_null($val)) {
+                $newinfo[$fld] = $val;
+            }
+        }
+        $newinfo = truncate_userinfo($newinfo);
+
+        foreach ($newinfo as $key => $value) {
+
+            $iscustom = in_array($key, $customfields);
+            if (!$iscustom) {
+                $key = strtolower($key);
+            }
+            if ((!property_exists($origuser, $key) && !$iscustom)
+                or $key === 'username'
+                or $key === 'id'
+                or $key === 'auth'
+                or $key === 'mnethostid'
+                or $key === 'deleted'
+            ) {
+                // Unknown or must not be changed.
+                continue;
+            }
+
+            if ($iscustom) {
+                $name = str_replace('profile_field_', '', $key);
+                $origval = $origuser->profile[$name];
+            } else {
+                $origval = $origuser->$key;
+            }
+
+            $update = $this->config->{'field_updatelocal_' . $key};
+            $lock = $this->config->{'field_lock_' . $key};
+            $updateable = !empty($update)
+                && !empty($lock)
+                && ($update === 'onlogin')
+                && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
+                && (string)$origval !== (string)$value;
+
+            if ($updateable) {
+                $newuser[$key] = (string)$value;
+            }
+        }
+
+        if ($newuser) {
+            $newuser['id'] = $origuser->id;
+            $newuser['timemodified'] = time();
+            user_update_user((object)$newuser, false, false);
+
+            // Save user profile data.
+            profile_save_data((object)$newuser);
+
+            // Trigger event.
+            \core\event\user_updated::create_from_userid($newuser['id'])->trigger();
+        }
+
+        return get_complete_user_data('id', $origuser->id);
+    }
+
+    /**
+     * Get the IMIS Bridge services proxy.
+     *
+     * @return \local_imisbridge\service_proxy
+     */
+    protected
+    function get_service_proxy()
     {
         return new \local_imisbridge\service_proxy();
     }
 
-    protected function decrypt($val)
+    /**
+     * Decrypt a string.
+     *
+     * @param string $val
+     * @return null|string
+     */
+    protected
+    function decrypt($val)
     {
         $svc = $this->get_service_proxy();
         return $svc->decrypt($val);
     }
 
-    protected function complete_user_login($user)
+    /**
+     * @param \stdClass $user
+     */
+    protected
+    function complete_user_login($user)
     {
         complete_user_login($user);
     }

@@ -15,11 +15,12 @@
  * @license   All Rights Reserved
  */
 namespace auth_imisbridge\tests;
-use auth_plugin_imisbridge;
+
+use auth_plugin_imisbridge as auth_imisbridge;
 use local_imisbridge\service_proxy;
 
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__.'/test_base.php');
+require_once(__DIR__ . '/test_base.php');
 
 /**
  * Test class for adhoc tasks.
@@ -29,17 +30,18 @@ require_once(__DIR__.'/test_base.php');
  * @copyright 2017 Learning Stacks LLC
  * @license   All Rights Reserved
  */
-class auth_imisbridge_integration_testcase extends test_base
+class config_form_testcase extends test_base
 {
-    // get_service_proxy
-    public function test_get_service_proxy()
+
+    public function setUp()
+    {
+        $_COOKIE = [];
+    }
+
+    public function test_basics()
     {
         $this->resetAfterTest(true);
         $this->markTestIncomplete();
     }
-
-    // decrypt
-
-    // get_user_info
 
 }

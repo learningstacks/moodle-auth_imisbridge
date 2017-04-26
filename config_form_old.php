@@ -69,7 +69,7 @@ foreach ($ssonames as $ssoname) {
 
 
     <tr>
-        <td/>
+        <td></td>
     </tr>
     <tr>
         <td>

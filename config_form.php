@@ -85,7 +85,7 @@ foreach ($ssonames as $ssoname) {
 
 
     <tr>
-        <td/>
+        <td></td>
     </tr>
     <tr>
         <td>
@@ -136,7 +136,7 @@ foreach ($ssonames as $ssoname) {
                 for="sso_cookie_remove_on_logout"><?php print_string('sso_cookie_remove_on_logout_label', 'auth_imisbridge') ?></label>:
         </td>
         <td>
-            <?php echo html_writer::select_yes_no('sso_cookie_remove_on_logout', $config->sso_cookie_remove_on_logout === '1'); ?>
+            <?php echo html_writer::select_yes_no('sso_cookie_remove_on_logout', $config->sso_cookie_remove_on_logout); ?>
         </td>
         <td>
             <?php print_string('sso_cookie_remove_on_logout_desc', 'auth_imisbridge') ?>
@@ -149,13 +149,13 @@ foreach ($ssonames as $ssoname) {
                 for="sso_cookie_is_encrypted"><?php print_string('sso_cookie_remove_is_encrypted_label', 'auth_imisbridge') ?></label>:
         </td>
         <td>
-            <?php echo html_writer::select_yes_no('sso_cookie_is_encrypted', $config->sso_cookie_is_encrypted === '1'); ?>
+            <?php echo html_writer::select_yes_no('sso_cookie_is_encrypted', $config->sso_cookie_is_encrypted); ?>
         </td>
         <td>
             <?php print_string('sso_cookie_remove_is_encrypted_desc', 'auth_imisbridge') ?>
         </td>
     </tr>
 
-    <?php print_auth_lock_options($this->authtype, $user_fields, get_string('auth_fieldlocks_help', 'auth'), false, false); ?>
+    <?php print_auth_lock_options($this->authtype, $user_fields, get_string('auth_fieldlocks_help', 'auth_imisbridge'), true, true, $this->get_custom_user_profile_fields()); ?>
 
 </table>

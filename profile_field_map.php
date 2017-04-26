@@ -15,12 +15,11 @@
  * @license   All Rights Reserved
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->version   = 2017042600;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2016120502;        // Requires this Moodle version
-$plugin->component = 'auth_imisbridge';       // Full name of the plugin (used for diagnostics)
-$plugin->dependencies = array(
-    'local_imisbridge' => 2017040400,
-);
-
+/** @var array $map maps IMIS contact field names to Moodle field names.
+ * Intended to be customized for each installation
+ */
+$map = [
+    'FirstName' => 'firstname',
+    'LastName' => 'lastname',
+    'EmailAddress' => 'email'
+];

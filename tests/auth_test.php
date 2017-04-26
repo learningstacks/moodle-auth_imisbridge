@@ -14,29 +14,15 @@
  * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
+namespace auth_imisbridge\tests;
+
+use auth_plugin_imisbridge;
+use local_imisbridge\service_proxy;
+use stdClass;
 
 defined('MOODLE_INTERNAL') || die();
-require_once('../auth.php');
+require_once(__DIR__ . '/test_base.php');
 
-interface iServiceProxy
-{
-    public function decrypt($encrypted_text);
-
-    public function moodle_update($data);
-}
-
-class test_subject extends auth_plugin_imisbridge
-{
-    public function get_config()
-    {
-        return parent::get_config();
-    }
-
-    public function get_imis_id_from_sso_cookie()
-    {
-        return parent::get_imis_id_from_sso_cookie();
-    }
-}
 
 /**
  * Test class for adhoc tasks.
@@ -46,7 +32,7 @@ class test_subject extends auth_plugin_imisbridge
  * @copyright 2017 Learning Stacks LLC
  * @license   All Rights Reserved
  */
-class auth_imisbridge_testcase extends advanced_testcase
+class auth_imisbridge_testcase extends test_base
 {
 
     public function setUp()
@@ -62,7 +48,7 @@ class auth_imisbridge_testcase extends advanced_testcase
         $this->assertFalse($auth->can_change_password());
         $this->assertFalse($auth->is_internal());
         $this->assertSame('', $auth->change_password_url());
-        $this->assertTrue($auth->is_synchronised_with_external());
+        $this->assertFalse($auth->is_synchronised_with_external());
     }
 
     /**
@@ -558,12 +544,16 @@ class auth_imisbridge_testcase extends advanced_testcase
                 'redirect',
                 'get_service_proxy',
                 'decrypt',
-                'complete_user_login'
+                'complete_user_login',
+                'get_contact_info'
             ])
             ->getMock();
         $auth->expects($this->never())->method('redirect_to_sso_login');
+        $auth->expects($this->once())->method('redirect');
         $auth->expects($this->never())->method('decrypt');
         $auth->expects($this->never())->method('get_service_proxy');
+        $auth->expects($this->once())->method('get_contact_info')->willReturn([]);
+
         $auth->expects($this->once())
             ->method('complete_user_login')
             ->with(
@@ -604,17 +594,19 @@ class auth_imisbridge_testcase extends advanced_testcase
                 'redirect',
                 'get_service_proxy',
                 'decrypt',
-                'complete_user_login'
+                'complete_user_login',
+                'get_contact_info'
             ])
             ->getMock();
         $auth->expects($this->never())->method('redirect_to_sso_login');
         $auth->expects($this->never())->method('decrypt');
         $auth->expects($this->never())->method('get_service_proxy');
+        $auth->expects($this->once())->method('get_contact_info')->willReturn([]);
         $auth->expects($this->once())
             ->method('complete_user_login')
             ->with(
                 $this->callback(function ($user) {
-                    return ($user->username === 'user1_username');
+                    return ($user->username == 'user1_username');
                 })
             );
         $auth->expects($this->once())->method('redirect')->with('http://wantsurl.com/');
@@ -646,11 +638,19 @@ class auth_imisbridge_testcase extends advanced_testcase
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $svc = $this->createMock(iServiceProxy::class);
+        $svc = $this->getMockBuilder(service_proxy::class)
+            ->setMethods([
+                'decrypt',
+                'get_contact_info'
+            ])
+            ->getMock();;
         $svc->expects($this->once())
             ->method('decrypt')
             ->with($this->equalTo('encrypted_id'))
             ->willReturn('unencrypted_id');
+        $svc->expects($this->once())
+            ->method('get_contact_info')
+            ->willReturn([]);
 
         $auth = $this->getMockBuilder(test_subject::class)
             ->setMethods([
@@ -662,7 +662,7 @@ class auth_imisbridge_testcase extends advanced_testcase
             ])
             ->getMock();
         $auth->expects($this->never())->method('redirect_to_sso_login');
-        $auth->expects($this->once())->method('get_service_proxy')->willReturn($svc);
+        $auth->expects($this->any())->method('get_service_proxy')->willReturn($svc);
         $auth->expects($this->once())
             ->method('complete_user_login')
             ->with(
