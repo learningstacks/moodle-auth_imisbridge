@@ -76,3 +76,11 @@ $string['sso_cookie_path_is_required'] = 'A valid path is required';
 $string['sso_cookie_domain_is_required'] = 'A valid domain is required';
 $string['sso_cookie_remove_on_logout_is_required'] = 'A value is required';
 $string['sso_cookie_is_encrypted_is_required'] = 'A value is required';
+
+$string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be updated from IMIS:</p>
+<ol>
+<li>Enter the name of the field as provided by the getContacvt web service function.</li>
+<li>Set <em>Update Local</em>em> to <em>On Every Login.</li>
+<li>Leave <em>Update External</em> set to <em>Never</em>.</li>
+<li>Set <em>Lock Value</em> to <em>Unlocked</em>. (Note: If you set this to <em>Unlocked if empty</em>, it will be updated only once. Once a value has been entered no more updates will occur.)</li>
+</ol>";

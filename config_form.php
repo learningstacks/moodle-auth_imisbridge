@@ -156,6 +156,6 @@ foreach ($ssonames as $ssoname) {
         </td>
     </tr>
 
-    <?php print_auth_lock_options($this->authtype, $user_fields, get_string('auth_fieldlocks_help', 'auth_imisbridge'), true, true, $this->get_custom_user_profile_fields()); ?>
+    <?php print_auth_lock_options($this->authtype, $user_fields, get_string('data_mapping_desc', 'auth_imisbridge'), true, true, $this->get_custom_user_profile_fields()); ?>
 
 </table>
