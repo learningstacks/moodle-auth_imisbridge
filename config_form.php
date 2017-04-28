@@ -156,6 +156,19 @@ foreach ($ssonames as $ssoname) {
         </td>
     </tr>
 
+    <tr valign="top" class="required">
+        <td align="right">
+            <label
+                for="synch_profile"><?php print_string('synch_profile_label', 'auth_imisbridge') ?></label>:
+        </td>
+        <td>
+            <?php echo html_writer::select_yes_no('synch_profile', $config->synch_profile); ?>
+        </td>
+        <td>
+            <?php print_string('synch_profile_desc', 'auth_imisbridge') ?>
+        </td>
+    </tr>
+
     <?php print_auth_lock_options($this->authtype, $user_fields, get_string('data_mapping_desc', 'auth_imisbridge'), true, true, $this->get_custom_user_profile_fields()); ?>
 
 </table>

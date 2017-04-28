@@ -77,6 +77,11 @@ $string['sso_cookie_domain_is_required'] = 'A valid domain is required';
 $string['sso_cookie_remove_on_logout_is_required'] = 'A value is required';
 $string['sso_cookie_is_encrypted_is_required'] = 'A value is required';
 
+$string['synch_profile_label'] = 'Update profile on login?';
+$string['synch_profile_desc'] = "If set to <em>Yes</em>, the users Moodle profile will be updated from IMIS after each successful login.";
+$string['synch_profile_err'] = "A value is required.";
+
+
 $string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be updated from IMIS:</p>
 <ol>
 <li>Enter the name of the field as provided by the getContacvt web service function.</li>

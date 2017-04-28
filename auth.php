@@ -147,7 +147,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $default->sso_cookie_path = '/';
         $default->sso_cookie_domain = '';
         $default->sso_cookie_remove_on_logout = '1';
-        $default->sso_cookie_is_encrypted = '1';
+        $default->sso_cookie_is_encrypted = '0';
+        $default->synch_profile = '0';
 
         $config = (object)array_merge((array)$default, (array)$data);
 
@@ -210,6 +211,11 @@ class auth_plugin_imisbridge extends auth_plugin_base
             $err['sso_cookie_is_encrypted'] = get_string('sso_cookie_is_encrypted_is_required', self::COMPONENT_NAME);
         }
 
+        if (!isset($form->synch_profile) || trim($form->sso_cookie_is_encrypted) == '') {
+            $err['synch_profile'] = get_string('synch_profile_err', self::COMPONENT_NAME);
+        }
+
+
     }
 
     /**
@@ -227,6 +233,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         set_config('sso_cookie_domain', trim($form->sso_cookie_domain), self::COMPONENT_NAME);
         set_config('sso_cookie_remove_on_logout', $form->sso_cookie_remove_on_logout, self::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', $form->sso_cookie_is_encrypted, self::COMPONENT_NAME);
+        set_config('synch_profile', $form->synch_profile, self::COMPONENT_NAME);
 
         return true;
     }
@@ -287,7 +294,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
         if ($imis_id) {
             $user = $this->get_user_by_imis_id($imis_id);
             if ($user) {
-                $user = $this->synch_user_record($user);
+                if ($this->config->synch_profile) {
+                    $user = $this->synch_user_record($user);
+                }
                 $this->complete_user_login($user);         // Complete setting up the $USER
                 return $this->redirect($urltogo);   // Send to originally requested url
                 // redirect function will not return
