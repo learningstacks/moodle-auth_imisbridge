@@ -318,7 +318,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     protected function redirect_to_sso_login($courseid = 1)
     {
-        $params = ['CourseID' => $courseid];
+        $params = ['id' => $courseid];
 
         if ($this->config->sso_login_url) {
             $sso_login_url = new moodle_url($this->config->sso_login_url, $params);

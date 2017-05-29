@@ -17,7 +17,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2017042600;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version   = 2017051600;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->release = '1.1.0';             // Changed redirect parameter to id
 $plugin->requires  = 2016120502;        // Requires this Moodle version
 $plugin->component = 'auth_imisbridge';       // Full name of the plugin (used for diagnostics)
 $plugin->dependencies = array(
