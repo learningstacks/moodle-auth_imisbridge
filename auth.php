@@ -322,7 +322,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         if ($this->config->sso_login_url) {
             $sso_login_url = new moodle_url($this->config->sso_login_url, $params);
-            $this->redirect($sso_login_url->out(), get_string('loginthroughthemainwebsite', self::COMPONENT_NAME));
+            $this->redirect($sso_login_url->out());
         }
 
         return false;
