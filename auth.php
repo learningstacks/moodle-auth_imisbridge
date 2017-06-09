@@ -368,8 +368,25 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $imis_id = null;
 
         $token = optional_param('token', null, PARAM_TEXT);
-        if (!is_null($token)) {
-            debugging("token found ($token)", DEBUG_DEVELOPER);
+
+        // Token may be part of the original target URL which is now
+        // in the session wantsurl variable
+        if (is_null($token)) {
+            if (isset($_SESSION['SESSION']->wantsurl)) {
+                $url = new moodle_url($_SESSION['SESSION']->wantsurl);
+                $token = $url->get_param('token');
+            }
+        }
+
+        // Perhaps we have a cookie?
+        if (is_null($token)) {
+            $cookie = $this->get_sso_cookie();
+            if ($cookie) {
+                $token = $cookie;
+            }
+        }
+
+        if (!empty($token)) {
             if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
                 try {
                     $svc = $this->get_service_proxy();
@@ -381,26 +398,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 }
             } else {
                 $imis_id = $token; // imis_id is not encrypted (dev only)
-            }
-
-        } else {
-            $cookie = $this->get_sso_cookie();
-
-            if ($cookie) {
-                debugging("Cookie found ($cookie)", DEBUG_DEVELOPER);
-
-                if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
-                    try {
-                        $svc = $this->get_service_proxy();
-                        $imis_id = $svc->decrypt($cookie); // null returned on error
-                        debugging("token decryption suceeded ({$imis_id}", DEBUG_DEVELOPER);
-                    } catch (\Exception $e) {
-                        debugging("cookie decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
-                        $imis_id = null;
-                    }
-                } else {
-                    $imis_id = $cookie; // imis_id is not encrypted (dev only)
-                }
             }
         }
 

@@ -37,7 +37,10 @@ class auth_imisbridge_testcase extends test_base
 
     public function setUp()
     {
+        global $CFG;
         $_COOKIE = [];
+        $CFG->debugdeveloper = false;
+        $CFG->debug = 0;
     }
 
     public function test_basics()
@@ -337,6 +340,7 @@ class auth_imisbridge_testcase extends test_base
 
         $val = $auth->get_imis_id();
         $this->assertSame('unencrypted_imis_id', $val);
+        $this->getDebuggingMessages();
     }
 
     public function test_get_imis_id_no_cookie()
@@ -380,6 +384,7 @@ class auth_imisbridge_testcase extends test_base
 
         $val = $auth->get_imis_id();
         $this->assertNull($val);
+        $this->getDebuggingMessages();
     }
 
     // expire_sso_cookie
