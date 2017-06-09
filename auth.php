@@ -369,11 +369,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         $token = optional_param('token', null, PARAM_TEXT);
         if (!is_null($token)) {
+            debugging("token found ($token)", DEBUG_DEVELOPER);
             if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
                 try {
                     $svc = $this->get_service_proxy();
                     $imis_id = $svc->decrypt($token); // null returned on error
+                    debugging("token decryption suceeded ({$imis_id}", DEBUG_DEVELOPER);
                 } catch (\Exception $e) {
+                    debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
                     $imis_id = null;
                 }
             } else {
@@ -384,11 +387,15 @@ class auth_plugin_imisbridge extends auth_plugin_base
             $cookie = $this->get_sso_cookie();
 
             if ($cookie) {
+                debugging("Cookie found ($cookie)", DEBUG_DEVELOPER);
+
                 if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
                     try {
                         $svc = $this->get_service_proxy();
                         $imis_id = $svc->decrypt($cookie); // null returned on error
+                        debugging("token decryption suceeded ({$imis_id}", DEBUG_DEVELOPER);
                     } catch (\Exception $e) {
+                        debugging("cookie decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
                         $imis_id = null;
                     }
                 } else {
