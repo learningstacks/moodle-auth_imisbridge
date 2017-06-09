@@ -498,7 +498,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('get_imis_id');
         $auth->expects($this->never())->method('redirect_to_sso_login');
 
-        $this->assertFalse($auth->loginpage_hook());
+        $this->assertFalse($auth->pre_loginpage_hook());
     }
 
     /**
@@ -521,7 +521,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('redirect');
         $auth->expects($this->once())->method('redirect_to_sso_login');
 
-        $this->assertFalse($auth->loginpage_hook());
+        $this->assertFalse($auth->pre_loginpage_hook());
     }
 
     /**
@@ -571,7 +571,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
     /**
@@ -622,7 +622,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
     /**
@@ -670,7 +670,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://wantsurl.com/');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
 
@@ -731,7 +731,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
     public function test_login_page_hook_encrypted_token()
@@ -787,7 +787,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
     /**
@@ -824,7 +824,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('complete_user_login');
         $auth->expects($this->once())->method('redirect')->with($this->equalTo($expected_redirect));
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
 
     }
 
@@ -861,7 +861,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('complete_user_login');
         $auth->expects($this->never())->method('redirect');
 
-        $auth->loginpage_hook();
+        $auth->pre_loginpage_hook();
     }
 
 }

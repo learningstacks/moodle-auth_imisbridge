@@ -262,11 +262,21 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $redirect = $this->config->sso_logout_url;
     }
 
+    public function pre_loginpage_hook()
+    {
+        return authenticate_user();
+    }
+
+    public function loginpage_hook()
+    {
+        return authenticate_user();
+    }
+
     /**
      * @return bool|void
      * @throws coding_exception
      */
-    public function loginpage_hook()
+    public function authenticate_user()
     {
         global $CFG, $user, $COURSE;
 
