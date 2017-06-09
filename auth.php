@@ -264,12 +264,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
     public function pre_loginpage_hook()
     {
-        return authenticate_user();
+        return $this->authenticate_user();
     }
 
     public function loginpage_hook()
     {
-        return authenticate_user();
+        return $this->authenticate_user();
     }
 
     /**
