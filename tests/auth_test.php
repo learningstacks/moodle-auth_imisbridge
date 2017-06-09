@@ -302,8 +302,8 @@ class auth_imisbridge_testcase extends test_base
         $this->assertNull($auth->get_sso_cookie());
     }
 
-    // get_imis_id_from_sso_cookie
-    public function test_get_imis_id_from_sso_cookie_unencrypted()
+    // get_imis_id
+    public function test_get_imis_id_unencrypted()
     {
         $this->resetAfterTest(true);
         $auth = $this->getMockBuilder(test_subject::class)
@@ -314,7 +314,7 @@ class auth_imisbridge_testcase extends test_base
         $this->assertSame('imis_id', $auth->get_sso_cookie());
     }
 
-    public function test_get_imis_id_from_sso_cookie_encrypted()
+    public function test_get_imis_id_encrypted()
     {
         $this->resetAfterTest(true);
 
@@ -335,11 +335,11 @@ class auth_imisbridge_testcase extends test_base
             ->method('get_service_proxy')
             ->willReturn($svc);
 
-        $val = $auth->get_imis_id_from_sso_cookie();
+        $val = $auth->get_imis_id();
         $this->assertSame('unencrypted_imis_id', $val);
     }
 
-    public function test_get_imis_id_from_sso_cookie_no_cookie()
+    public function test_get_imis_id_no_cookie()
     {
         $this->resetAfterTest(true);
         set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
@@ -353,11 +353,11 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())
             ->method('decrypt');
 
-        $val = $auth->get_imis_id_from_sso_cookie();
+        $val = $auth->get_imis_id();
         $this->assertNull($val);
     }
 
-    public function test_get_imis_id_from_sso_cookie_decryption_fails()
+    public function test_get_imis_id_decryption_fails()
     {
         $this->resetAfterTest(true);
 
@@ -378,7 +378,7 @@ class auth_imisbridge_testcase extends test_base
             ->method('get_service_proxy')
             ->willReturn($svc);
 
-        $val = $auth->get_imis_id_from_sso_cookie();
+        $val = $auth->get_imis_id();
         $this->assertNull($val);
     }
 
@@ -485,12 +485,12 @@ class auth_imisbridge_testcase extends test_base
 
         $auth = $this->getMockBuilder(test_subject::class)
             ->setMethods([
-                'get_imis_id_from_sso_cookie',
+                'get_imis_id',
                 'redirect_to_sso_login'
             ])
             ->getMock();
 
-        $auth->expects($this->never())->method('get_imis_id_from_sso_cookie');
+        $auth->expects($this->never())->method('get_imis_id');
         $auth->expects($this->never())->method('redirect_to_sso_login');
 
         $this->assertFalse($auth->loginpage_hook());
@@ -729,6 +729,62 @@ class auth_imisbridge_testcase extends test_base
         $auth->loginpage_hook();
     }
 
+    public function test_login_page_hook_encrypted_token()
+    {
+        global $CFG;
+
+        $CFG->wwwroot = 'http://abc.com';
+
+        $this->resetAfterTest(true);
+
+        $gen = $this->getDataGenerator();
+        $user = $gen->create_user([
+            'username' => 'user1_username',
+            'idnumber' => 'unencrypted_id',
+            'auth' => 'manual'
+        ]);
+
+        set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
+
+        $_GET['token'] = 'encrypted_id';
+
+        $svc = $this->getMockBuilder(service_proxy::class)
+            ->setMethods([
+                'decrypt',
+                'get_contact_info'
+            ])
+            ->getMock();;
+        $svc->expects($this->once())
+            ->method('decrypt')
+            ->with($this->equalTo('encrypted_id'))
+            ->willReturn('unencrypted_id');
+        $svc->expects($this->never())
+            ->method('get_contact_info')
+            ->willReturn([]);
+
+        $auth = $this->getMockBuilder(test_subject::class)
+            ->setMethods([
+                'redirect_to_sso_login',
+                'redirect',
+                'get_service_proxy',
+                'decrypt',
+                'complete_user_login'
+            ])
+            ->getMock();
+        $auth->expects($this->never())->method('redirect_to_sso_login');
+        $auth->expects($this->any())->method('get_service_proxy')->willReturn($svc);
+        $auth->expects($this->once())
+            ->method('complete_user_login')
+            ->with(
+                $this->callback(function ($user) {
+                    return ($user->username === 'user1_username');
+                })
+            );
+        $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
+
+        $auth->loginpage_hook();
+    }
+
     /**
      * @group login_page_hook
      */
@@ -748,7 +804,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_login_url', 'val_login_url', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $expected_redirect = 'val_login_url?CourseID=1';
+        $expected_redirect = 'val_login_url?id=1';
 
         $auth = $this->getMockBuilder(test_subject::class)
             ->setMethods([

@@ -35,9 +35,9 @@ class test_subject extends \auth_plugin_imisbridge
         return parent::get_config();
     }
 
-    public function get_imis_id_from_sso_cookie()
+    public function get_imis_id()
     {
-        return parent::get_imis_id_from_sso_cookie();
+        return parent::get_imis_id();
     }
 }
 

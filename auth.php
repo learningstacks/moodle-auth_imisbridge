@@ -290,7 +290,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $courseid = isset($COURSE->id) ? $COURSE->id : 1;
 
         // The imis_id of the user is passed in the configured cookie.
-        $imis_id = $this->get_imis_id_from_sso_cookie();
+        $imis_id = $this->get_imis_id();
         if ($imis_id) {
             $user = $this->get_user_by_imis_id($imis_id);
             if ($user) {
@@ -363,21 +363,37 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @return null|string
      */
-    protected function get_imis_id_from_sso_cookie()
+    protected function get_imis_id()
     {
         $imis_id = null;
-        $cookie = $this->get_sso_cookie();
 
-        if ($cookie) {
+        $token = optional_param('token', null, PARAM_TEXT);
+        if (!is_null($token)) {
             if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
                 try {
                     $svc = $this->get_service_proxy();
-                    $imis_id = $svc->decrypt($cookie); // null returned on error
+                    $imis_id = $svc->decrypt($token); // null returned on error
                 } catch (\Exception $e) {
                     $imis_id = null;
                 }
             } else {
-                $imis_id = $cookie; // imis_id is not encrypted (dev only)
+                $imis_id = $token; // imis_id is not encrypted (dev only)
+            }
+
+        } else {
+            $cookie = $this->get_sso_cookie();
+
+            if ($cookie) {
+                if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
+                    try {
+                        $svc = $this->get_service_proxy();
+                        $imis_id = $svc->decrypt($cookie); // null returned on error
+                    } catch (\Exception $e) {
+                        $imis_id = null;
+                    }
+                } else {
+                    $imis_id = $cookie; // imis_id is not encrypted (dev only)
+                }
             }
         }
 
