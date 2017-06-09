@@ -278,7 +278,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function authenticate_user()
     {
-        global $CFG, $user, $COURSE;
+        global $CFG, $USER, $COURSE;
 
         // If nosso url parameter is present skip this auth
         if (!is_null(optional_param('nosso', null, PARAM_RAW))) {
@@ -308,9 +308,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
                     $user = $this->synch_user_record($user);
                 }
                 $this->complete_user_login($user);         // Complete setting up the $USER
+                debugging('User logged in ' . print_r($USER, true),DEBUG_DEVELOPER);
                 return $this->redirect($urltogo);   // Send to originally requested url
                 // redirect function will not return
                 // return value is returned to support unit test
+            } else {
+                throw new moodle_exception('No user with that IMIS_ID');
             }
         }
 
@@ -401,7 +404,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 try {
                     $svc = $this->get_service_proxy();
                     $imis_id = $svc->decrypt($token); // null returned on error
-                    debugging("token decryption suceeded ({$imis_id}", DEBUG_DEVELOPER);
+                    debugging("token decryption suceeded ({$imis_id})", DEBUG_DEVELOPER);
                 } catch (\Exception $e) {
                     debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
                     $imis_id = null;
@@ -576,9 +579,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @param \stdClass $user
      */
-    protected
-    function complete_user_login($user)
+    protected function complete_user_login($user)
     {
-        complete_user_login($user);
+        return complete_user_login($user);
     }
 }
