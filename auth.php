@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/user/profile/lib.php');
 class auth_plugin_imisbridge extends auth_plugin_base
 {
 
-    protected $logfile = 'C:\Users\Terry\log.txt';
+    protected $logfile = null;
 
     /**
      *
