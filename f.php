@@ -50,8 +50,8 @@ if ($frm->is_cancelled()) {
 } else if ($data = $frm->get_data()) {
     $sso_config = get_config('auth_imisbridge');
     $courseid = optional_param('CourseID', 1, PARAM_INT);
-//    $redirect = $CFG->wwwroot."/course/view.php?id=$courseid&token=1362661"; // good
-    $redirect = $CFG->wwwroot."/course/view.php?id=$courseid&token=1362660"; // no user
+    $redirect = $CFG->wwwroot."/course/view.php?id=$courseid&token=1362661"; // good
+//    $redirect = $CFG->wwwroot."/course/view.php?id=$courseid&token=1362660"; // no user
 //    $cookiename = $sso_config->sso_cookie_name;
 //    $cookiedomain = $sso_config->sso_cookie_domain;
 //    $cookiepath = $sso_config->sso_cookie_path;

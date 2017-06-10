@@ -822,7 +822,8 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('get_service_proxy');
         $auth->expects($this->never())->method('decrypt');
         $auth->expects($this->never())->method('complete_user_login');
-        $auth->expects($this->once())->method('redirect')->with($this->equalTo($expected_redirect));
+        $auth->expects($this->never())->method('redirect');
+        $this->expectException(\moodle_exception::class);
 
         $auth->pre_loginpage_hook();
 
@@ -860,6 +861,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('decrypt');
         $auth->expects($this->never())->method('complete_user_login');
         $auth->expects($this->never())->method('redirect');
+        $this->expectException(\moodle_exception::class);
 
         $auth->pre_loginpage_hook();
     }

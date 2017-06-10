@@ -30,6 +30,8 @@ require_once($CFG->dirroot . '/user/profile/lib.php');
 class auth_plugin_imisbridge extends auth_plugin_base
 {
 
+    protected $logfile = 'C:\Users\Terry\log.txt';
+
     /**
      *
      */
@@ -42,6 +44,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
     {
         $this->authtype = 'imisbridge';
         $this->config = $this->get_config();
+    }
+
+    protected function log($msg, $data = null) {
+        if (!empty($this->logfile)) {
+            file_put_contents($this->logfile, PHP_EOL.$msg.PHP_EOL.print_r($data, true), FILE_APPEND);
+        }
     }
 
     /**
@@ -275,6 +283,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @return bool|void
      * @throws coding_exception
+     * @throws moodle_exception
      */
     public function authenticate_user()
     {
@@ -308,7 +317,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
                     $user = $this->synch_user_record($user);
                 }
                 $this->complete_user_login($user);         // Complete setting up the $USER
-                debugging('User logged in ' . print_r($USER, true),DEBUG_DEVELOPER);
+                $this->log('User logged in ', $USER);
                 return $this->redirect($urltogo);   // Send to originally requested url
                 // redirect function will not return
                 // return value is returned to support unit test
@@ -404,7 +413,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 try {
                     $svc = $this->get_service_proxy();
                     $imis_id = $svc->decrypt($token); // null returned on error
-                    debugging("token decryption suceeded ({$imis_id})", DEBUG_DEVELOPER);
+                    $this->log("token decryption suceeded ({$imis_id})");
                 } catch (\Exception $e) {
                     debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
                     $imis_id = null;
@@ -483,10 +492,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function synch_user_record($user)
     {
+        global $PAGE;
+
+        $PAGE->set_context(context_system::instance());
         $origuser = get_complete_user_data('id', $user->id);
         $newuser = array();
         $imis_id = $origuser->idnumber;
         $contact_info = $this->get_contact_info($imis_id);
+        $this->log('contact_info', $contact_info);
         $customfields = $this->get_custom_user_profile_fields();
 
         // Map incoming date to moodle profile fields
