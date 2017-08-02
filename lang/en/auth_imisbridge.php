@@ -84,7 +84,7 @@ $string['synch_profile_err'] = "A value is required.";
 
 $string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be updated from IMIS:</p>
 <ol>
-<li>Enter the name of the field as provided by the getContacvt web service function.</li>
+<li>Enter the name of the field as provided by the IMIS Bridge MoodleGetUserProfile web service function.</li>
 <li>Set <em>Update Local</em>em> to <em>On Every Login.</li>
 <li>Leave <em>Update External</em> set to <em>Never</em>.</li>
 <li>Set <em>Lock Value</em> to <em>Unlocked</em>. (Note: If you set this to <em>Unlocked if empty</em>, it will be updated only once. Once a value has been entered no more updates will occur.)</li>
