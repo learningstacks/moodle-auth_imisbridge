@@ -439,7 +439,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $user = null;
         $auth = 'manual';
 
-        $user = $DB->get_record('user', array('idnumber' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
+        $user = $DB->get_record('user', array('username' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
         if ($user === false) {
             $user = null;
         }
@@ -497,7 +497,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $PAGE->set_context(context_system::instance());
         $origuser = get_complete_user_data('id', $user->id);
         $newuser = array();
-        $imis_id = $origuser->idnumber;
+        $imis_id = $origuser->username;
         $contact_info = $this->get_contact_info($imis_id);
         $this->log('contact_info', $contact_info);
         $customfields = $this->get_custom_user_profile_fields();
