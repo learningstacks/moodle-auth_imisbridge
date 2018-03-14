@@ -33,15 +33,6 @@ require_once(__DIR__ . '/test_base.php');
 class profile_sync_testcase extends test_base
 {
 
-    protected function set_field_configs($field_config)
-    {
-        foreach ($field_config as $item) {
-            list($name, $map, $lock, $update) = $item;
-            set_config("field_map_$name", $map, 'auth/imisbridge');
-            set_config("field_lock_$name", $lock, 'auth/imisbridge');
-            set_config("field_updatelocal_$name", $update, 'auth/imisbridge');
-        }
-    }
 
     protected function get_svc_mock($newinfo)
     {

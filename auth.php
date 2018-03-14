@@ -20,16 +20,18 @@ ini_set('display_errors', 1);
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
-require_once($CFG->libdir . '/authlib.php');
-require_once($CFG->dirroot . '/user/lib.php');
-require_once($CFG->dirroot . '/user/profile/lib.php');
+require_once(__DIR__ . '/../../lib/authlib.php');
+require_once(__DIR__ . '/../../user/lib.php');
+require_once(__DIR__ . '/../../user/profile/lib.php');
 
 /**
  * Class auth_plugin_imisbridge
  */
-class auth_plugin_imisbridge extends auth_plugin_base
-{
+class auth_plugin_imisbridge extends auth_plugin_base {
 
+    /**
+     * @var null
+     */
     protected $logfile = null;
 
     /**
@@ -37,18 +39,23 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     const COMPONENT_NAME = "auth_imisbridge";
 
+
     /**
      * auth_plugin_imisbridge constructor.
+     * @throws dml_exception
      */
-    public function __construct()
-    {
+    public function __construct() {
         $this->authtype = 'imisbridge';
         $this->config = $this->get_config();
     }
 
+    /**
+     * @param $msg
+     * @param null $data
+     */
     protected function log($msg, $data = null) {
         if (!empty($this->logfile)) {
-            file_put_contents($this->logfile, PHP_EOL.$msg.PHP_EOL.print_r($data, true), FILE_APPEND);
+            file_put_contents($this->logfile, PHP_EOL . $msg . PHP_EOL . print_r($data, true), FILE_APPEND);
         }
     }
 
@@ -58,10 +65,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $imis_id The username
      * @param string $password The password
-     * @return bool Authentication success or failure.
+     * @return void Authentication success or failure.
+     * @throws moodle_exception
      */
-    function user_login($imis_id, $password)
-    {
+    function user_login($imis_id, $password) {
         $this->redirect_to_sso_login();
     }
 
@@ -72,19 +79,17 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param  object $user User table object  (with system magic quotes)
      * @param  string $newpassword Plaintext password (with system magic quotes)
-     * @return boolean result
-     *
+     * @return void result
+     * @throws moodle_exception
      */
-    function user_update_password($user, $newpassword)
-    {
+    function user_update_password($user, $newpassword) {
         $this->redirect_to_sso_login();
     }
 
     /**
      * @return bool
      */
-    function prevent_local_passwords()
-    {
+    function prevent_local_passwords() {
         return false;
     }
 
@@ -93,16 +98,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return bool
      */
-    function is_internal()
-    {
+    function is_internal() {
         return false;
     }
 
     /**
      * @return bool
      */
-    function is_synchronised_with_external()
-    {
+    function is_synchronised_with_external() {
         return false;
     }
 
@@ -112,8 +115,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return bool
      */
-    function can_change_password()
-    {
+    function can_change_password() {
         return false;
     }
 
@@ -123,8 +125,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return string
      */
-    function change_password_url()
-    {
+    function change_password_url() {
         return '';
     }
 
@@ -133,8 +134,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return bool
      */
-    function can_reset_password()
-    {
+    function can_reset_password() {
         return false;
     }
 
@@ -142,8 +142,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @return object
      * @throws dml_exception
      */
-    protected function get_config()
-    {
+    protected function get_config() {
         $data = get_config(self::COMPONENT_NAME);
         $data2 = get_config('auth/' . $this->authtype);
         $data = (object)array_merge((array)$data2, (array)$data);
@@ -174,8 +173,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param array $user_fields
      * @return void
      */
-    function config_form($form, $err, $user_fields)
-    {
+    function config_form($form, $err, $user_fields) {
         $config = $this->config; // Passed into included script
         include 'config_form.php';
     }
@@ -187,9 +185,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param stdClass $form
      * @param array $err errors
      * @return void
+     * @throws coding_exception
      */
-    function validate_form($form, &$err)
-    {
+    function validate_form($form, &$err) {
 
         if (!isset($form->sso_login_url) || trim($form->sso_login_url) == '') {
             $err['sso_login_url'] = get_string('sso_login_url_is_required', self::COMPONENT_NAME);
@@ -232,8 +230,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param stdClass $form
      * @return bool always true or exception
      */
-    function process_config($form)
-    {
+    function process_config($form) {
         set_config('sso_login_url', trim($form->sso_login_url), self::COMPONENT_NAME);
         set_config('sso_logout_url', trim($form->sso_logout_url), self::COMPONENT_NAME);
         set_config('sso_cookie_name', trim($form->sso_cookie_name), self::COMPONENT_NAME);
@@ -251,16 +248,16 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * Confirm the new user as registered. This should normally not be used,
      * but it may be necessary if the user auth_method is changed to manual
      * before the user is confirmed.
+     * @param $imis_id
+     * @param bool|null $confirmsecret
      */
-    function user_confirm($imis_id, $confirmsecret = null)
-    {
+    function user_confirm($imis_id, $confirmsecret = null) {
     }
 
     /**
      *
      */
-    function logoutpage_hook()
-    {
+    function logoutpage_hook() {
         global $redirect;
 
         if ($this->config->sso_cookie_remove_on_logout == 1) {
@@ -270,23 +267,30 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $redirect = $this->config->sso_logout_url;
     }
 
-    public function pre_loginpage_hook()
-    {
-        return $this->authenticate_user();
-    }
-
-    public function loginpage_hook()
-    {
+    /**
+     * @return bool
+     * @throws coding_exception
+     * @throws moodle_exception
+     */
+    public function pre_loginpage_hook() {
         return $this->authenticate_user();
     }
 
     /**
-     * @return bool|void
+     * @return bool
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public function authenticate_user()
-    {
+    public function loginpage_hook() {
+        return $this->authenticate_user();
+    }
+
+    /**
+     * @return bool
+     * @throws coding_exception
+     * @throws moodle_exception
+     */
+    public function authenticate_user() {
         global $CFG, $USER, $COURSE;
 
         // If nosso url parameter is present skip this auth
@@ -311,9 +315,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
         // The imis_id of the user is passed in the configured cookie.
         $imis_id = $this->get_imis_id();
         if ($imis_id) {
+            $isnewuser = false;
             $user = $this->get_user_by_imis_id($imis_id);
+            if (!$user) {
+                $user = create_user_record($imis_id, $this->get_random_password(), 'manual');
+                $isnewuser = true;
+            }
             if ($user) {
-                if ($this->config->synch_profile) {
+                if ($this->config->synch_profile || $isnewuser) {
                     $user = $this->synch_user_record($user);
                 }
                 $this->complete_user_login($user);         // Complete setting up the $USER
@@ -336,15 +345,16 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @param int $courseid
      * @return bool
-     * @throws coding_exception
+     * @throws moodle_exception
      */
-    protected function redirect_to_sso_login($courseid = 1)
-    {
+    protected function redirect_to_sso_login($courseid = 1) {
         $params = ['id' => $courseid];
 
         if ($this->config->sso_login_url) {
             $sso_login_url = new moodle_url($this->config->sso_login_url, $params);
             $this->redirect($sso_login_url->out());
+        } else {
+            throw new \coding_exception("sso_login_url is not defined");
         }
 
         return false;
@@ -355,16 +365,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string|null $msg
      * @throws moodle_exception
      */
-    protected function redirect($url, $msg = null)
-    {
+    protected function redirect($url, $msg = null) {
         redirect($url, $msg);
     }
 
     /**
      * @return null
      */
-    public function get_sso_cookie()
-    {
+    public function get_sso_cookie() {
         $cookie = null;
 
         if (!empty($_COOKIE[$this->config->sso_cookie_name])) {
@@ -377,16 +385,16 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      *
      */
-    protected function expire_sso_cookie()
-    {
+    protected function expire_sso_cookie() {
         setcookie($this->config->sso_cookie_name, "", time() - 3600, $this->config->sso_cookie_path, $this->config->sso_cookie_domain); // domain may be null
     }
 
     /**
      * @return null|string
+     * @throws coding_exception
+     * @throws moodle_exception
      */
-    protected function get_imis_id()
-    {
+    protected function get_imis_id() {
         $imis_id = null;
 
         $token = optional_param('token', null, PARAM_TEXT);
@@ -431,9 +439,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $imis_id
      * @return mixed|null
+     * @throws dml_exception
      */
-    public function get_user_by_imis_id($imis_id)
-    {
+    public function get_user_by_imis_id($imis_id) {
         global $DB;
 
         $user = null;
@@ -454,8 +462,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return array
      */
-    protected function get_field_map()
-    {
+    protected function get_field_map() {
         $map = [];
         include(__DIR__ . '/profile_field_map.php');
         return $map;
@@ -465,15 +472,18 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param $imis_id
      * @return array
      */
-    protected function get_contact_info($imis_id)
-    {
+    protected function get_contact_info($imis_id) {
         $svc = $this->get_service_proxy();
         $newinfo = $svc->get_contact_info($imis_id);
         return $newinfo;
     }
 
-    protected function get_src_value($fld, $data)
-    {
+    /**
+     * @param $fld
+     * @param $data
+     * @return null
+     */
+    protected function get_src_value($fld, $data) {
         if (isset($this->config->{'field_map_' . $fld})) {
             $srcname = $this->config->{'field_map_' . $fld};
             if (isset($data[$srcname])) {
@@ -489,9 +499,11 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param stdClass $user
      * @return array
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
      */
-    public function synch_user_record($user)
-    {
+    public function synch_user_record($user) {
         global $PAGE;
 
         $PAGE->set_context(context_system::instance());
@@ -570,9 +582,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return \local_imisbridge\service_proxy
      */
-    protected
-    function get_service_proxy()
-    {
+    protected function get_service_proxy() {
         return new \local_imisbridge\service_proxy();
     }
 
@@ -581,19 +591,23 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $val
      * @return null|string
+     * @throws Exception
      */
-    protected
-    function decrypt($val)
-    {
+    protected function decrypt($val) {
         $svc = $this->get_service_proxy();
         return $svc->decrypt($val);
     }
 
     /**
      * @param \stdClass $user
+     * @return stdClass
      */
-    protected function complete_user_login($user)
-    {
+    protected function complete_user_login($user) {
         return complete_user_login($user);
+    }
+
+    protected function get_random_password() {
+        $pass = bin2hex(openssl_random_pseudo_bytes(10));
+        return $pass;
     }
 }

@@ -51,5 +51,15 @@ class test_subject extends \auth_plugin_imisbridge
  */
 abstract class test_base extends \advanced_testcase
 {
+    protected function set_field_configs($field_config)
+    {
+        foreach ($field_config as $item) {
+            list($name, $map, $lock, $update) = $item;
+            set_config("field_map_$name", $map, 'auth/imisbridge');
+            set_config("field_lock_$name", $lock, 'auth/imisbridge');
+            set_config("field_updatelocal_$name", $update, 'auth/imisbridge');
+        }
+    }
+
 
 }
