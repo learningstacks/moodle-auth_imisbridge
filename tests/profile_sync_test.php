@@ -116,6 +116,7 @@ class profile_sync_testcase extends test_base
         $auth->synch_user_record($user);
 
         $newuser = get_complete_user_data('id', $user->id);
+        $this->assertEquals($newuser->username, $newuser->idnumber);
         $this->assertEquals($newinfo->FirstName, $newuser->firstname);
         $this->assertEquals($newinfo->LastName, $newuser->lastname);
         $this->assertEquals($newinfo->EmailAddress, $newuser->email);

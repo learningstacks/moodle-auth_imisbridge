@@ -564,6 +564,7 @@ class auth_plugin_imisbridge extends auth_plugin_base {
 
         if ($newuser) {
             $newuser['id'] = $origuser->id;
+            $newuser['idnumber'] = $imis_id;
             $newuser['timemodified'] = time();
             user_update_user((object)$newuser, false, false);
 
