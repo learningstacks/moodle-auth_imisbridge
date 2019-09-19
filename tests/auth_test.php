@@ -142,8 +142,6 @@ class auth_imisbridge_testcase extends test_base
      */
     public function test_get_config_defaults()
     {
-        global $DB;
-
         $this->resetAfterTest(true);
         $auth = new \auth_plugin_imisbridge();
         $this->assertEquals('', $auth->config->sso_login_url);
@@ -161,8 +159,6 @@ class auth_imisbridge_testcase extends test_base
      */
     public function test_get_config_values()
     {
-        global $DB;
-
         $this->resetAfterTest(true);
         set_config('sso_login_url', 'sso_login_url', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_logout_url', 'sso_logout_url', auth_plugin_imisbridge::COMPONENT_NAME);
@@ -293,12 +289,12 @@ class auth_imisbridge_testcase extends test_base
     // update_user_profile
 
     /**
-     * @throws \dml_exception
+     *
      */
     public function test_get_userinfo()
     {
         $this->resetAfterTest(true);
-        $auth = new \auth_plugin_imisbridge();
+//        $auth = new \auth_plugin_imisbridge();
         $this->markTestIncomplete('Under development');
     }
 

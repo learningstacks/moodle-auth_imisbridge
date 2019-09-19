@@ -14,6 +14,7 @@
  * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
+
 namespace auth_imisbridge\tests;
 
 use auth_plugin_imisbridge as auth_imisbridge;
@@ -102,7 +103,7 @@ class profile_sync_testcase extends test_base
 
         $gen = $this->getDataGenerator();
 
-        $fld1 = $DB->insert_record('user_info_field', (object)[
+        $DB->insert_record('user_info_field', (object)[
             'shortname' => 'fld1_shortname',
             'name' => 'fld1_name',
             'datatype' => 'text',
@@ -154,7 +155,6 @@ class profile_sync_testcase extends test_base
      */
     public function test_field_not_updated_when_locked()
     {
-        global $DB;
         $this->resetAfterTest(true);
         $gen = $this->getDataGenerator();
 
