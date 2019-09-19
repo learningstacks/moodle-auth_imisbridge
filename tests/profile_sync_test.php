@@ -139,6 +139,7 @@ class profile_sync_testcase extends test_base
         $svc = $this->get_svc_mock($newinfo);
         $auth = $this->get_auth_mock($svc);
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->synch_user_record($user);
 
         $newuser = get_complete_user_data('id', $user->id);
@@ -172,6 +173,7 @@ class profile_sync_testcase extends test_base
         $svc = $this->get_svc_mock($newinfo);
         $auth = $this->get_auth_mock($svc);
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->synch_user_record($origuser);
 
         $newuser = get_complete_user_data('id', $origuser->id);

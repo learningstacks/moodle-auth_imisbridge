@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnhandledExceptionInspection */
 // Copyright (C) 2017 Learning Stacks LLC https://learningstacks.com/
 //
 // This file is a part of the IMIS Integration Components developed by

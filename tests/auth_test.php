@@ -64,6 +64,8 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @group get_user_by_imis_id
+     * @throws \dml_exception
+     * @throws \dml_exception
      */
     public function test_get_user_by_imis_id()
     {
@@ -81,6 +83,7 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @group get_user_by_imis_id
+     * @throws \dml_exception
      */
     public function test_get_user_by_imis_id_different_auth()
     {
@@ -98,6 +101,7 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @group get_user_by_imis_id
+     * @throws \dml_exception
      */
     public function test_get_user_by_imis_id_user_suspended_returns_null()
     {
@@ -115,6 +119,7 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @group get_user_by_imis_id
+     * @throws \dml_exception
      */
     public function test_get_user_by_imis_id_user_deleted()
     {
@@ -280,6 +285,7 @@ class auth_imisbridge_testcase extends test_base
             ->method('get_service_proxy')
             ->willReturn($svc);
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $this->assertSame($out, $auth->get_imis_id());
         $this->getDebuggingMessages();
     }
@@ -332,6 +338,7 @@ class auth_imisbridge_testcase extends test_base
             ->getMock();
         $auth->expects($this->once())->method('expire_sso_cookie');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->logoutpage_hook();
         $this->assertEquals('val_logouturl', $redirect);
     }
@@ -353,6 +360,7 @@ class auth_imisbridge_testcase extends test_base
             ->getMock();
         $auth->expects($this->never())->method('expire_sso_cookie');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->logoutpage_hook();
         $this->assertEquals('val_logouturl', $redirect);
     }
@@ -375,6 +383,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('get_imis_id');
         $auth->expects($this->never())->method('redirect_to_sso_login');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $this->assertFalse($auth->pre_loginpage_hook());
     }
 
@@ -398,6 +407,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('redirect');
         $auth->expects($this->once())->method('redirect_to_sso_login');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $this->assertFalse($auth->pre_loginpage_hook());
     }
 
@@ -449,6 +459,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 
@@ -500,6 +511,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 
@@ -549,6 +561,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://wantsurl.com/');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 
@@ -611,6 +624,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 
@@ -671,6 +685,7 @@ class auth_imisbridge_testcase extends test_base
             );
         $auth->expects($this->once())->method('redirect')->with('http://abc.com/');
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 
@@ -709,6 +724,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('redirect');
         $this->expectException(\moodle_exception::class);
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
 
     }
@@ -747,6 +763,7 @@ class auth_imisbridge_testcase extends test_base
         $auth->expects($this->never())->method('redirect');
         $this->expectException(\moodle_exception::class);
 
+        /** @noinspection PhpUndefinedMethodInspection */
         $auth->pre_loginpage_hook();
     }
 

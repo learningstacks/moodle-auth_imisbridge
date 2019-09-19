@@ -18,8 +18,11 @@ ini_set('display_errors', 1);
 defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
+/** @noinspection PhpIncludeInspection */
 require_once($CFG->libdir . '/authlib.php');
+/** @noinspection PhpIncludeInspection */
 require_once($CFG->dirroot . '/user/lib.php');
+/** @noinspection PhpIncludeInspection */
 require_once($CFG->dirroot . '/user/profile/lib.php');
 
 /**
@@ -331,7 +334,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
                     $svc = $this->get_service_proxy();
                     $imis_id = $svc->decrypt($token); // null returned on error
                     $this->log("token decryption suceeded ({$imis_id})");
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
                     $imis_id = null;
                 }
@@ -518,7 +521,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * @param \stdClass $user
+     * @param stdClass $user
      * @return stdClass
      */
     protected function complete_user_login($user)
