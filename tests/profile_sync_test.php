@@ -37,9 +37,9 @@ class profile_sync_testcase extends test_base
     {
         foreach ($field_config as $item) {
             list($name, $map, $lock, $update) = $item;
-            set_config("field_map_$name", $map, 'auth/imisbridge');
-            set_config("field_lock_$name", $lock, 'auth/imisbridge');
-            set_config("field_updatelocal_$name", $update, 'auth/imisbridge');
+            set_config("field_map_$name", $map, 'auth_imisbridge');
+            set_config("field_lock_$name", $lock, 'auth_imisbridge');
+            set_config("field_updatelocal_$name", $update, 'auth_imisbridge');
         }
     }
 
@@ -131,7 +131,10 @@ class profile_sync_testcase extends test_base
         $this->assertEquals($newinfo->fld1, $newuser->profile['fld1_shortname']);
     }
 
-    public function test_field_locked()
+    /**
+     * @throws \dml_exception
+     */
+    public function test_field_not_updated_when_locked()
     {
         global $DB;
         $this->resetAfterTest(true);

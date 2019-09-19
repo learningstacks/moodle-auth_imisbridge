@@ -14,6 +14,7 @@
  * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
+
 namespace auth_imisbridge\tests;
 
 use auth_plugin_imisbridge;
@@ -34,6 +35,7 @@ require_once(__DIR__ . '/test_base.php');
  */
 class auth_imisbridge_testcase extends test_base
 {
+
 
     public function setUp()
     {
@@ -91,7 +93,7 @@ class auth_imisbridge_testcase extends test_base
     /**
      * @group get_user_by_imis_id
      */
-    public function test_get_user_by_imis_id_user_suspended()
+    public function test_get_user_by_imis_id_user_suspended_returns_null()
     {
         $this->resetAfterTest(true);
         $gen = $this->getDataGenerator();
@@ -163,253 +165,109 @@ class auth_imisbridge_testcase extends test_base
         $this->assertSame('sso_cookie_path', $config->sso_cookie_path);
         $this->assertSame('sso_cookie_domain', $config->sso_cookie_domain);
         $this->assertSame('0', $config->sso_cookie_remove_on_logout);
-        $this->assertSame('1', $config->sso_cookie_is_encrypted);
-        $this->assertSame('1', $config->synch_profile);
+        $this->assertSame('0', $config->sso_cookie_is_encrypted);
+        $this->assertSame('0', $config->synch_profile);
     }
 
-    // validate_form
-    public function test_validate_form_nulls()
+    public function data_test_get_imis_id()
     {
-        $this->resetAfterTest(true);
-
-        $form = new \stdClass();
-        $err = array();
-        $subj = new test_subject();
-        $subj->validate_form($form, $err);
-        $this->assertArrayHasKey('sso_login_url', $err);
-        $this->assertArrayHasKey('sso_logout_url', $err);
-        $this->assertArrayHasKey('sso_cookie_name', $err);
-        $this->assertArrayHasKey('sso_cookie_path', $err);
-        $this->assertArrayHasKey('sso_cookie_domain', $err);
-        $this->assertArrayHasKey('sso_cookie_remove_on_logout', $err);
-        $this->assertArrayHasKey('sso_cookie_is_encrypted', $err);
-        $this->assertArrayHasKey('synch_profile', $err);
+        return [
+            'Unencrypted cookie' => [
+                'method' => 'cookie',
+                'encrypted' => '0',
+                'in' => 'unencrypted_cookie',
+                'out' => 'unencrypted_cookie',
+                'decrypt_throws' => false
+            ],
+            'Unencrypted token' => [
+                'method' => 'token',
+                'encrypted' => '0',
+                'in' => 'unencrypted_token',
+                'out' => 'unencrypted_token',
+                'decrypt_throws' => false
+            ],
+            'Encrypted cookie' => [
+                'method' => 'cookie',
+                'encrypted' => '1',
+                'in' => 'encrypted_cookie',
+                'out' => 'unencrypted_encrypted_cookie',
+                'decrypt_throws' => false
+            ],
+            'Encrypted token' => [
+                'method' => 'token',
+                'encrypted' => '1',
+                'in' => 'unencrypted_token',
+                'out' => 'unencrypted_encrypted_token',
+                'decrypt_throws' => false
+            ],
+            'No token or cookie' => [
+                'method' => null,
+                'encrypted' => '0',
+                'in' => null,
+                'out' => null,
+                'decrypt_throws' => false
+            ],
+            'Decrypt fails' => [
+                'method' => 'token',
+                'encrypted' => '1',
+                'in' => 'encrypted_token',
+                'out' => null,
+                'decrypt_throws' => true
+            ],
+        ];
     }
 
-    public function test_validate_form_blanks()
+    /**
+     * @dataProvider data_test_get_imis_id
+     * @param $method
+     * @param $encrypted
+     * @param $val
+     * @param $expectedval
+     */
+    public function test_get_imis_id($method, $encrypted, $in, $out, $decrypt_throws)
     {
+        global $_COOKIE, $_GET;
+
         $this->resetAfterTest(true);
 
-        $form = new \stdClass();
-        $err = array();
-        $subj = new test_subject();
-
-        $form->sso_login_url = '  ';
-        $form->sso_logout_url = '  ';
-        $form->sso_cookie_name = '  ';
-        $form->sso_cookie_path = '  ';
-        $form->sso_cookie_domain = '  ';
-        $form->sso_cookie_remove_on_logout = '  ';
-        $form->sso_cookie_is_encrypted = '  ';
-        $form->synch_profile = '  ';
-
-        $subj->validate_form($form, $err);
-        $this->assertArrayHasKey('sso_login_url', $err);
-        $this->assertArrayHasKey('sso_logout_url', $err);
-        $this->assertArrayHasKey('sso_cookie_name', $err);
-        $this->assertArrayHasKey('sso_cookie_path', $err);
-        $this->assertArrayHasKey('sso_cookie_domain', $err);
-        $this->assertArrayHasKey('sso_cookie_remove_on_logout', $err);
-        $this->assertArrayHasKey('sso_cookie_is_encrypted', $err);
-        $this->assertArrayHasKey('synch_profile', $err);
-    }
-
-    public function test_validate_form_valid()
-    {
-        $this->resetAfterTest(true);
-
-        $form = new \stdClass();
-        $err = array();
-        $subj = new test_subject();
-
-        $form->sso_login_url = 'http://bogus.com/';
-        $form->sso_logout_url = 'http://bogus.com/';
-        $form->sso_cookie_name = 'abc';
-        $form->sso_cookie_path = '/';
-        $form->sso_cookie_domain = 'a.b.com';
-        $form->sso_cookie_remove_on_logout = '1';
-        $form->sso_cookie_is_encrypted = '1';
-        $form->synch_profile = '1';
-
-        $subj->validate_form($form, $err);
-        $this->assertArrayNotHasKey('sso_login_url', $err);
-        $this->assertArrayNotHasKey('sso_logout_url', $err);
-        $this->assertArrayNotHasKey('sso_cookie_name', $err);
-        $this->assertArrayNotHasKey('sso_cookie_path', $err);
-        $this->assertArrayNotHasKey('sso_cookie_domain', $err);
-        $this->assertArrayNotHasKey('sso_cookie_remove_on_logout', $err);
-        $this->assertArrayNotHasKey('sso_cookie_is_encrypted', $err);
-        $this->assertArrayNotHasKey('synch_profile', $err);
-    }
-
-    // process_config
-    public function test_process_config()
-    {
-        $this->resetAfterTest(true);
-
-        $data = new stdClass();
-        $data->sso_login_url = ' a ';
-        $data->sso_logout_url = ' b ';
-        $data->sso_cookie_name = ' c ';
-        $data->sso_cookie_path = ' d ';
-        $data->sso_cookie_domain = ' e ';
-        $data->sso_cookie_remove_on_logout = '2';
-        $data->sso_cookie_is_encrypted = '3';
-        $data->synch_profile = '1';
-
-        $subj = new test_subject();
-        $subj->process_config($data);
-        $config = $subj->get_config();
-
-        $this->assertSame('a', $config->sso_login_url);
-        $this->assertSame('b', $config->sso_logout_url);
-        $this->assertSame('c', $config->sso_cookie_name);
-        $this->assertSame('d', $config->sso_cookie_path);
-        $this->assertSame('e', $config->sso_cookie_domain);
-        $this->assertSame('2', $config->sso_cookie_remove_on_logout);
-        $this->assertSame('3', $config->sso_cookie_is_encrypted);
-        $this->assertSame('1', $config->synch_profile);
-    }
-
-    // get_sso_cookie
-    public function test_get_sso_cookie_found()
-    {
-        $this->resetAfterTest(true);
-        $_COOKIE['cookiename'] = 'abc';
+        set_config('sso_cookie_is_encrypted', $encrypted ? '1' : '0', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('sso_cookie_path', '/', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_path', '/cookiepath', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_domain', 'cookiedomain.com', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = new test_subject();
-
-        $this->assertSame('abc', $auth->get_sso_cookie());
-    }
-
-    public function test_get_sso_cookie_not_found()
-    {
-        $this->resetAfterTest(true);
-        $_COOKIE['badname'] = 'abc';
-        set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_path', '/cookiepath', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_domain', 'cookiedomain.com', auth_plugin_imisbridge::COMPONENT_NAME);
-
-        $auth = new test_subject();
-
-        $this->assertNull($auth->get_sso_cookie());
-    }
-
-    public function test_get_sso_cookie_name_not_set()
-    {
-        $this->resetAfterTest(true);
-        $auth = new test_subject();
-        $this->assertNull($auth->get_sso_cookie());
-    }
-
-    // get_imis_id
-    public function test_get_imis_id_unencrypted()
-    {
-        $this->resetAfterTest(true);
-        $auth = $this->getMockBuilder(test_subject::class)
-            ->setMethods(['get_sso_cookie', 'decrypt'])
-            ->getMock();
-        $auth->expects($this->once())->method('get_sso_cookie')->willReturn('imis_id');
-        $auth->expects($this->never())->method('decrypt');
-        $this->assertSame('imis_id', $auth->get_sso_cookie());
-    }
-
-    public function test_get_imis_id_encrypted()
-    {
-        $this->resetAfterTest(true);
+        if ($method == 'token') {
+            unset($_COOKIE['cookiename']);
+            $_GET['token'] = $in;
+        } elseif ($method == 'cookie') {
+            unset($_GET['token']);
+            $_COOKIE['cookiename'] = $in;
+        } else {
+            unset($_GET['token']);
+            unset($_COOKIE['cookiename']);
+        }
 
         $svc = $this->createMock(iServiceProxy::class);
-        $svc->expects($this->once())
-            ->method('decrypt')
-            ->willReturn('unencrypted_imis_id');
-
-        set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
+        if (!$encrypted) {
+            $svc->expects($this->never())->method('decrypt');
+        } elseif ($decrypt_throws) {
+            $svc->expects($this->once())
+                ->method('decrypt')
+                ->will($this->throwException(new \Exception));
+        } else {
+            $svc->expects($this->once())
+                ->method('decrypt')
+                ->willReturn($out);
+        }
 
         $auth = $this->getMockBuilder(test_subject::class)
-            ->setMethods(['get_sso_cookie', 'get_service_proxy'])
+            ->setMethods(['get_service_proxy'])
             ->getMock();
-        $auth->expects($this->once())
-            ->method('get_sso_cookie')
-            ->willReturn('encrypted_imis_id');
-        $auth->expects($this->once())
+        $auth->expects($this->any())
             ->method('get_service_proxy')
             ->willReturn($svc);
 
-        $val = $auth->get_imis_id();
-        $this->assertSame('unencrypted_imis_id', $val);
+        $this->assertSame($out, $auth->get_imis_id());
         $this->getDebuggingMessages();
     }
-
-    public function test_get_imis_id_no_cookie()
-    {
-        $this->resetAfterTest(true);
-        set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
-
-        $auth = $this->getMockBuilder(test_subject::class)
-            ->setMethods(['get_sso_cookie', 'decrypt'])
-            ->getMock();
-        $auth->expects($this->once())
-            ->method('get_sso_cookie')
-            ->willReturn(null);
-        $auth->expects($this->never())
-            ->method('decrypt');
-
-        $val = $auth->get_imis_id();
-        $this->assertNull($val);
-    }
-
-    public function test_get_imis_id_decryption_fails()
-    {
-        $this->resetAfterTest(true);
-
-        $svc = $this->createMock(iServiceProxy::class);
-        $svc->expects($this->once())
-            ->method('decrypt')
-            ->will($this->throwException(new \Exception));
-
-        set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
-
-        $auth = $this->getMockBuilder(test_subject::class)
-            ->setMethods(['get_sso_cookie', 'get_service_proxy'])
-            ->getMock();
-        $auth->expects($this->once())
-            ->method('get_sso_cookie')
-            ->willReturn('encrypted_imis_id');
-        $auth->expects($this->once())
-            ->method('get_service_proxy')
-            ->willReturn($svc);
-
-        $val = $auth->get_imis_id();
-        $this->assertNull($val);
-        $this->getDebuggingMessages();
-    }
-
-    // expire_sso_cookie
-//    public function test_expire_sso_cookie_all_valid_config()
-//    {
-//        $this->resetAfterTest(true);
-//        set_config('sso_cookie_name', 'abc', auth_plugin_imisbridge::COMPONENT_NAME);
-//        set_config('sso_cookie_path', '/', auth_plugin_imisbridge::COMPONENT_NAME);
-//        set_config('sso_cookie_domain', 'abc.com', auth_plugin_imisbridge::COMPONENT_NAME);
-//        $auth = new test_subject();
-////        $auth->expire_sso_cookie();
-//        $this->markTestIncomplete();
-//    }
-//
-//    public function test_expire_sso_cookie_invalid_config()
-//    {
-//        $this->resetAfterTest(true);
-//        set_config('sso_cookie_name', '', auth_plugin_imisbridge::COMPONENT_NAME);
-//        set_config('sso_cookie_path', '', auth_plugin_imisbridge::COMPONENT_NAME);
-//        set_config('sso_cookie_domain', '', auth_plugin_imisbridge::COMPONENT_NAME);
-//        $auth = new test_subject();
-////        $auth->expire_sso_cookie();
-//        $this->markTestIncomplete();
-//    }
-
 
     // update_user_profile
     public function test_get_userinfo()
@@ -483,7 +341,7 @@ class auth_imisbridge_testcase extends test_base
     /**
      * @group login_page_hook
      */
-    public function test_login_page_hook_nosso()
+    public function test_pre_loginpage_hook_nosso()
     {
         $this->resetAfterTest(true);
         $_GET['nosso'] = 1;
@@ -545,6 +403,7 @@ class auth_imisbridge_testcase extends test_base
 
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = $this->getMockBuilder(test_subject::class)
             ->setMethods([
@@ -646,6 +505,7 @@ class auth_imisbridge_testcase extends test_base
 
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = $this->getMockBuilder(test_subject::class)
             ->setMethods([
@@ -696,6 +556,7 @@ class auth_imisbridge_testcase extends test_base
 
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $svc = $this->getMockBuilder(service_proxy::class)
             ->setMethods([
@@ -750,6 +611,7 @@ class auth_imisbridge_testcase extends test_base
         ]);
 
         set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $_GET['token'] = 'encrypted_id';
 
