@@ -48,7 +48,7 @@ class auth_imisbridge_testcase extends test_base
     public function test_basics()
     {
         $this->resetAfterTest(true);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->assertFalse($auth->can_reset_password());
         $this->assertFalse($auth->can_change_password());
         $this->assertFalse($auth->is_internal());
@@ -68,7 +68,7 @@ class auth_imisbridge_testcase extends test_base
             'idnumber' => 'u1',
             'auth' => 'manual'
         ]);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->assertNull($auth->get_user_by_imis_id('u2'));
         $this->assertNotNull($auth->get_user_by_imis_id('u1'));
     }
@@ -86,7 +86,7 @@ class auth_imisbridge_testcase extends test_base
             'auth' => 'other',
             'suspended' => 1
         ]);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->assertNull($auth->get_user_by_imis_id('u1'));
     }
 
@@ -103,7 +103,7 @@ class auth_imisbridge_testcase extends test_base
             'auth' => 'manual',
             'suspended' => 1
         ]);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->assertNull($auth->get_user_by_imis_id('u1'));
     }
 
@@ -120,7 +120,7 @@ class auth_imisbridge_testcase extends test_base
             'auth' => 'manual',
             'deleted' => 1
         ]);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->assertNull($auth->get_user_by_imis_id('u1'));
     }
 
@@ -130,17 +130,15 @@ class auth_imisbridge_testcase extends test_base
         global $DB;
 
         $this->resetAfterTest(true);
-        $auth = new test_subject();
-        $config = $auth->get_config();
-
-        $this->assertEquals('', $config->sso_login_url);
-        $this->assertEquals('', $config->sso_logout_url);
-        $this->assertEquals('MoodleSSO', $config->sso_cookie_name);
-        $this->assertEquals('/', $config->sso_cookie_path);
-        $this->assertEquals('', $config->sso_cookie_domain);
-        $this->assertEquals('1', $config->sso_cookie_remove_on_logout);
-        $this->assertEquals('1', $config->sso_cookie_is_encrypted);
-        $this->assertEquals('1', $config->synch_profile);
+        $auth = new \auth_plugin_imisbridge();
+        $this->assertEquals('', $auth->config->sso_login_url);
+        $this->assertEquals('', $auth->config->sso_logout_url);
+        $this->assertEquals('MoodleSSO', $auth->config->sso_cookie_name);
+        $this->assertEquals('/', $auth->config->sso_cookie_path);
+        $this->assertEquals('', $auth->config->sso_cookie_domain);
+        $this->assertEquals('1', $auth->config->sso_cookie_remove_on_logout);
+        $this->assertEquals('1', $auth->config->sso_cookie_is_encrypted);
+        $this->assertEquals('1', $auth->config->synch_profile);
     }
 
     public function test_get_config_values()
@@ -156,17 +154,17 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
-        $auth = new test_subject();
-        $config = $auth->get_config();
 
-        $this->assertSame('sso_login_url', $config->sso_login_url);
-        $this->assertSame('sso_logout_url', $config->sso_logout_url);
-        $this->assertSame('sso_cookie_name', $config->sso_cookie_name);
-        $this->assertSame('sso_cookie_path', $config->sso_cookie_path);
-        $this->assertSame('sso_cookie_domain', $config->sso_cookie_domain);
-        $this->assertSame('0', $config->sso_cookie_remove_on_logout);
-        $this->assertSame('0', $config->sso_cookie_is_encrypted);
-        $this->assertSame('0', $config->synch_profile);
+        $auth = new \auth_plugin_imisbridge();
+
+        $this->assertSame('sso_login_url', $auth->config->sso_login_url);
+        $this->assertSame('sso_logout_url', $auth->config->sso_logout_url);
+        $this->assertSame('sso_cookie_name', $auth->config->sso_cookie_name);
+        $this->assertSame('sso_cookie_path', $auth->config->sso_cookie_path);
+        $this->assertSame('sso_cookie_domain', $auth->config->sso_cookie_domain);
+        $this->assertSame('0', $auth->config->sso_cookie_remove_on_logout);
+        $this->assertSame('0', $auth->config->sso_cookie_is_encrypted);
+        $this->assertSame('0', $auth->config->synch_profile);
     }
 
     public function data_test_get_imis_id()
@@ -258,7 +256,7 @@ class auth_imisbridge_testcase extends test_base
                 ->willReturn($out);
         }
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods(['get_service_proxy'])
             ->getMock();
         $auth->expects($this->any())
@@ -273,7 +271,7 @@ class auth_imisbridge_testcase extends test_base
     public function test_get_userinfo()
     {
         $this->resetAfterTest(true);
-        $auth = new test_subject();
+        $auth = new \auth_plugin_imisbridge();
         $this->markTestIncomplete('Under development');
     }
 
@@ -284,7 +282,7 @@ class auth_imisbridge_testcase extends test_base
 //
 //        set_config('sso_login_url', 'val_sso_logoin_url', auth_plugin_imisbridge::COMPONENT_NAME);
 //
-//        $auth = $this->getMockBuilder(test_subject::class)
+//        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
 //            ->setMethods(['redirect'])
 //            ->getMock();
 //
@@ -308,7 +306,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_logout_url', 'val_logouturl', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_remove_on_logout', '1', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods(['expire_sso_cookie'])
             ->getMock();
         $auth->expects($this->once())->method('expire_sso_cookie');
@@ -329,7 +327,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_logout_url', 'val_logouturl', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods(['expire_sso_cookie'])
             ->getMock();
         $auth->expects($this->never())->method('expire_sso_cookie');
@@ -346,7 +344,7 @@ class auth_imisbridge_testcase extends test_base
         $this->resetAfterTest(true);
         $_GET['nosso'] = 1;
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'get_imis_id',
                 'redirect_to_sso_login'
@@ -368,7 +366,7 @@ class auth_imisbridge_testcase extends test_base
 
 //        set_config('sso_logout_url', 'val_logouturl', auth_plugin_imisbridge::COMPONENT_NAME);
 //        set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'get_user_by_imis_id',
                 'redirect_to_sso_login',
@@ -405,7 +403,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect_to_sso_login',
                 'redirect',
@@ -456,7 +454,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '1', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect_to_sso_login',
                 'redirect',
@@ -507,7 +505,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect_to_sso_login',
                 'redirect',
@@ -572,7 +570,7 @@ class auth_imisbridge_testcase extends test_base
             ->method('get_contact_info')
             ->willReturn([]);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect_to_sso_login',
                 'redirect',
@@ -629,7 +627,7 @@ class auth_imisbridge_testcase extends test_base
             ->method('get_contact_info')
             ->willReturn([]);
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect_to_sso_login',
                 'redirect',
@@ -673,7 +671,7 @@ class auth_imisbridge_testcase extends test_base
 
         $expected_redirect = 'val_login_url?id=1';
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect',
                 'get_service_proxy',
@@ -711,7 +709,7 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         // No sso_login_url
 
-        $auth = $this->getMockBuilder(test_subject::class)
+        $auth = $this->getMockBuilder(\auth_plugin_imisbridge::class)
             ->setMethods([
                 'redirect',
                 'get_service_proxy',

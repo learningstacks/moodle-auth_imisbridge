@@ -28,18 +28,6 @@ interface iServiceProxy
     public function moodle_update($data);
 }
 
-class test_subject extends \auth_plugin_imisbridge
-{
-    public function get_config()
-    {
-        return parent::get_config();
-    }
-
-    public function get_imis_id()
-    {
-        return parent::get_imis_id();
-    }
-}
 
 /**
  * Test class for adhoc tasks.
