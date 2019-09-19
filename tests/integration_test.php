@@ -32,6 +32,9 @@ require_once(__DIR__.'/test_base.php');
 class auth_imisbridge_integration_testcase extends test_base
 {
     // get_service_proxy
+    /**
+     *
+     */
     public function test_get_service_proxy()
     {
         $this->resetAfterTest(true);

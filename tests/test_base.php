@@ -21,10 +21,22 @@ use local_imisbridge\service_proxy;
 defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__.'/../auth.php');
 
+/**
+ * Interface iServiceProxy
+ * @package auth_imisbridge\tests
+ */
 interface iServiceProxy
 {
+    /**
+     * @param $encrypted_text
+     * @return mixed
+     */
     public function decrypt($encrypted_text);
 
+    /**
+     * @param $data
+     * @return mixed
+     */
     public function moodle_update($data);
 }
 

@@ -33,6 +33,9 @@ require_once(__DIR__ . '/test_base.php');
 class profile_sync_testcase extends test_base
 {
 
+    /**
+     * @param $field_config
+     */
     protected function set_field_configs($field_config)
     {
         foreach ($field_config as $item) {
@@ -43,6 +46,10 @@ class profile_sync_testcase extends test_base
         }
     }
 
+    /**
+     * @param $newinfo
+     * @return \PHPUnit\Framework\MockObject\MockObject
+     */
     protected function get_svc_mock($newinfo)
     {
         $svc = $this->getMockBuilder(service_proxy::class)
@@ -57,6 +64,10 @@ class profile_sync_testcase extends test_base
         return $svc;
     }
 
+    /**
+     * @param $svc
+     * @return \PHPUnit\Framework\MockObject\MockObject
+     */
     protected function get_auth_mock($svc)
     {
         $auth = $this->getMockBuilder(auth_imisbridge::class)
@@ -71,6 +82,9 @@ class profile_sync_testcase extends test_base
         return $auth;
     }
 
+    /**
+     *
+     */
     public function setUp()
     {
         $_COOKIE = [];
@@ -78,6 +92,9 @@ class profile_sync_testcase extends test_base
 
     }
 
+    /**
+     * @throws \dml_exception
+     */
     public function test_basics()
     {
         global $DB;

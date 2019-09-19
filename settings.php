@@ -14,6 +14,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
+global $ADMIN;
 
 if ($ADMIN->fulltree) {
 

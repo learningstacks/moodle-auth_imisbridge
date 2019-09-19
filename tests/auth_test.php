@@ -37,6 +37,9 @@ class auth_imisbridge_testcase extends test_base
 {
 
 
+    /**
+     *
+     */
     public function setUp()
     {
         global $CFG;
@@ -45,6 +48,9 @@ class auth_imisbridge_testcase extends test_base
         $CFG->debug = 0;
     }
 
+    /**
+     * @throws \dml_exception
+     */
     public function test_basics()
     {
         $this->resetAfterTest(true);
@@ -125,6 +131,10 @@ class auth_imisbridge_testcase extends test_base
     }
 
     // get_config
+
+    /**
+     * @throws \dml_exception
+     */
     public function test_get_config_defaults()
     {
         global $DB;
@@ -141,6 +151,9 @@ class auth_imisbridge_testcase extends test_base
         $this->assertEquals('1', $auth->config->synch_profile);
     }
 
+    /**
+     * @throws \dml_exception
+     */
     public function test_get_config_values()
     {
         global $DB;
@@ -167,6 +180,9 @@ class auth_imisbridge_testcase extends test_base
         $this->assertSame('0', $auth->config->synch_profile);
     }
 
+    /**
+     * @return array
+     */
     public function data_test_get_imis_id()
     {
         return [
@@ -217,10 +233,11 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_get_imis_id
-     * @param $method
-     * @param $encrypted
-     * @param $val
-     * @param $expectedval
+     * @param string"null $method 'token', 'cookie' or null
+     * @param bool $encrypted if true configure for encrypted toke/cookie
+     * @param string|null $in The incoming (possible encrypted) value
+     * @param string|null $out The expected result
+     * @param bool $decrypt_throws Simulate a decryption error if true
      */
     public function test_get_imis_id($method, $encrypted, $in, $out, $decrypt_throws)
     {
@@ -268,6 +285,10 @@ class auth_imisbridge_testcase extends test_base
     }
 
     // update_user_profile
+
+    /**
+     * @throws \dml_exception
+     */
     public function test_get_userinfo()
     {
         $this->resetAfterTest(true);
@@ -593,6 +614,9 @@ class auth_imisbridge_testcase extends test_base
         $auth->pre_loginpage_hook();
     }
 
+    /**
+     *
+     */
     public function test_login_page_hook_encrypted_token()
     {
         global $CFG;

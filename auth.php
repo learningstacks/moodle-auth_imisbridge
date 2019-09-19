@@ -28,6 +28,9 @@ require_once($CFG->dirroot . '/user/profile/lib.php');
 class auth_plugin_imisbridge extends auth_plugin_base
 {
 
+    /**
+     * @var null
+     */
     protected $logfile = null;
 
     /**
@@ -45,6 +48,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $this->config = get_config(self::COMPONENT_NAME);
     }
 
+    /**
+     * @param $msg
+     * @param null $data
+     */
     protected function log($msg, $data = null)
     {
         if (!empty($this->logfile)) {
@@ -58,7 +65,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $imis_id The username
      * @param string $password The password
-     * @return bool Authentication success or failure.
+     * @return void Authentication success or failure.
+     * @throws moodle_exception
      */
     public function user_login($imis_id, $password)
     {
@@ -70,10 +78,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * called when the user password is updated.
      *
-     * @param  object $user User table object  (with system magic quotes)
-     * @param  string $newpassword Plaintext password (with system magic quotes)
-     * @return boolean result
-     *
+     * @param object $user User table object  (with system magic quotes)
+     * @param string $newpassword Plaintext password (with system magic quotes)
+     * @return void result
+     * @throws moodle_exception
      */
     public function user_update_password($user, $newpassword)
     {
@@ -142,6 +150,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * Confirm the new user as registered. This should normally not be used,
      * but it may be necessary if the user auth_method is changed to manual
      * before the user is confirmed.
+     * @param string $imis_id
+     * @param null $confirmsecret
      */
     public function user_confirm($imis_id, $confirmsecret = null)
     { }
@@ -160,11 +170,21 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $redirect = $this->config->sso_logout_url;
     }
 
+    /**
+     * @return bool|void
+     * @throws coding_exception
+     * @throws moodle_exception
+     */
     public function pre_loginpage_hook()
     {
         return $this->authenticate_user();
     }
 
+    /**
+     * @return bool|void
+     * @throws coding_exception
+     * @throws moodle_exception
+     */
     public function loginpage_hook()
     {
         return $this->authenticate_user();
@@ -226,7 +246,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @param int $courseid
      * @return bool
-     * @throws coding_exception
+     * @throws moodle_exception
      */
     protected function redirect_to_sso_login($courseid = 1)
     {
@@ -277,8 +297,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * Obtain and decrypt (if necessary) the userid stored either in the token parameter
      * or SSO Cookie.
-     *  
+     *
      * @return null|string
+     * @throws coding_exception
+     * @throws moodle_exception
      */
     public function get_imis_id()
     {
@@ -326,6 +348,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $imis_id
      * @return mixed|null
+     * @throws dml_exception
      */
     public function get_user_by_imis_id($imis_id)
     {
@@ -368,6 +391,11 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $newinfo;
     }
 
+    /**
+     * @param $fld
+     * @param $data
+     * @return string|null
+     */
     protected function get_src_value($fld, $data)
     {
         if (isset($this->config->{'field_map_' . $fld})) {
@@ -385,6 +413,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param stdClass $user
      * @return array
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
      */
     public function synch_user_record($user)
     {
@@ -478,6 +509,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $val
      * @return null|string
+     * @throws Exception
      */
     protected function decrypt($val)
     {
@@ -487,6 +519,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
     /**
      * @param \stdClass $user
+     * @return stdClass
      */
     protected function complete_user_login($user)
     {
