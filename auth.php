@@ -37,11 +37,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
     /**
      * auth_plugin_imisbridge constructor.
+     * @throws dml_exception
      */
     public function __construct()
     {
         $this->authtype = 'imisbridge';
-        $this->config = $this->get_config();
+        $this->config = get_config(self::COMPONENT_NAME);
     }
 
     protected function log($msg, $data = null)
@@ -136,17 +137,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
     {
         return false;
     }
-
-    /**
-     * @return object
-     * @throws dml_exception
-     */
-    protected function get_config()
-    {
-        $data = get_config(self::COMPONENT_NAME);
-        return $data;
-    }
-
 
     /**
      * Confirm the new user as registered. This should normally not be used,
