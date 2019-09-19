@@ -8,8 +8,6 @@
 // of Learning Stacks LLC.
 
 /**
- *
- *
  * @package   auth_imisbridge
  * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
@@ -46,9 +44,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $this->config = $this->get_config();
     }
 
-    protected function log($msg, $data = null) {
+    protected function log($msg, $data = null)
+    {
         if (!empty($this->logfile)) {
-            file_put_contents($this->logfile, PHP_EOL.$msg.PHP_EOL.print_r($data, true), FILE_APPEND);
+            file_put_contents($this->logfile, PHP_EOL . $msg . PHP_EOL . print_r($data, true), FILE_APPEND);
         }
     }
 
@@ -60,7 +59,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string $password The password
      * @return bool Authentication success or failure.
      */
-    function user_login($imis_id, $password)
+    public function user_login($imis_id, $password)
     {
         $this->redirect_to_sso_login();
     }
@@ -75,7 +74,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @return boolean result
      *
      */
-    function user_update_password($user, $newpassword)
+    public function user_update_password($user, $newpassword)
     {
         $this->redirect_to_sso_login();
     }
@@ -83,7 +82,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @return bool
      */
-    function prevent_local_passwords()
+    public function prevent_local_passwords()
     {
         return false;
     }
@@ -93,7 +92,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return bool
      */
-    function is_internal()
+    public function is_internal()
     {
         return false;
     }
@@ -101,7 +100,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * @return bool
      */
-    function is_synchronised_with_external()
+    public function is_synchronised_with_external()
     {
         return false;
     }
@@ -123,7 +122,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return string
      */
-    function change_password_url()
+    public function change_password_url()
     {
         return '';
     }
@@ -133,7 +132,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return bool
      */
-    function can_reset_password()
+    public function can_reset_password()
     {
         return false;
     }
@@ -145,105 +144,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     protected function get_config()
     {
         $data = get_config(self::COMPONENT_NAME);
-        $data2 = get_config('auth/' . $this->authtype);
-        $data = (object)array_merge((array)$data2, (array)$data);
-
-        $default = new stdClass();
-        $default->sso_login_url = '';
-        $default->sso_logout_url = '';
-        $default->sso_cookie_name = '';
-        $default->sso_cookie_path = '/';
-        $default->sso_cookie_domain = '';
-        $default->sso_cookie_remove_on_logout = '1';
-        $default->sso_cookie_is_encrypted = '0';
-        $default->synch_profile = '0';
-
-        $config = (object)array_merge((array)$default, (array)$data);
-
-        return $config;
-    }
-
-    /**
-     * Prints a form for configuring this authentication plugin.
-     *
-     * This function is called from admin/auth.php, and outputs a full page with
-     * a form for configuring this plugin.
-     *
-     * @param stdClass $form
-     * @param array $err errors
-     * @param array $user_fields
-     * @return void
-     */
-    function config_form($form, $err, $user_fields)
-    {
-        $config = $this->config; // Passed into included script
-        include 'config_form.php';
-    }
-
-    /**
-     * A chance to validate form data, and last chance to
-     * do stuff before it is inserted in config_plugin
-     *
-     * @param stdClass $form
-     * @param array $err errors
-     * @return void
-     */
-    function validate_form($form, &$err)
-    {
-
-        if (!isset($form->sso_login_url) || trim($form->sso_login_url) == '') {
-            $err['sso_login_url'] = get_string('sso_login_url_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_logout_url) || trim($form->sso_logout_url) == '') {
-            $err['sso_logout_url'] = get_string('sso_logout_url_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_cookie_name) || trim($form->sso_cookie_name) == '') {
-            $err['sso_cookie_name'] = get_string('sso_cookie_name_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_cookie_path) || trim($form->sso_cookie_path) == '') {
-            $err['sso_cookie_path'] = get_string('sso_cookie_path_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_cookie_domain) || trim($form->sso_cookie_domain) == '') {
-            $err['sso_cookie_domain'] = get_string('sso_cookie_domain_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_cookie_remove_on_logout) || trim($form->sso_cookie_remove_on_logout) == '') {
-            $err['sso_cookie_remove_on_logout'] = get_string('sso_cookie_remove_on_logout_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->sso_cookie_is_encrypted) || trim($form->sso_cookie_is_encrypted) == '') {
-            $err['sso_cookie_is_encrypted'] = get_string('sso_cookie_is_encrypted_is_required', self::COMPONENT_NAME);
-        }
-
-        if (!isset($form->synch_profile) || trim($form->sso_cookie_is_encrypted) == '') {
-            $err['synch_profile'] = get_string('synch_profile_err', self::COMPONENT_NAME);
-        }
-
-
-    }
-
-    /**
-     * Processes and stores configuration data for this authentication plugin.
-     *
-     * @param stdClass $form
-     * @return bool always true or exception
-     */
-    function process_config($form)
-    {
-        set_config('sso_login_url', trim($form->sso_login_url), self::COMPONENT_NAME);
-        set_config('sso_logout_url', trim($form->sso_logout_url), self::COMPONENT_NAME);
-        set_config('sso_cookie_name', trim($form->sso_cookie_name), self::COMPONENT_NAME);
-        set_config('sso_cookie_path', trim($form->sso_cookie_path), self::COMPONENT_NAME);
-        set_config('sso_cookie_domain', trim($form->sso_cookie_domain), self::COMPONENT_NAME);
-        set_config('sso_cookie_remove_on_logout', $form->sso_cookie_remove_on_logout, self::COMPONENT_NAME);
-        set_config('sso_cookie_is_encrypted', $form->sso_cookie_is_encrypted, self::COMPONENT_NAME);
-        set_config('synch_profile', $form->synch_profile, self::COMPONENT_NAME);
-
-        return true;
+        return $data;
     }
 
 
@@ -252,14 +153,13 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * but it may be necessary if the user auth_method is changed to manual
      * before the user is confirmed.
      */
-    function user_confirm($imis_id, $confirmsecret = null)
-    {
-    }
+    public function user_confirm($imis_id, $confirmsecret = null)
+    { }
 
     /**
      *
      */
-    function logoutpage_hook()
+    public function logoutpage_hook()
     {
         global $redirect;
 
@@ -351,6 +251,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
+     * Execute a redirect. THis function is added to support unit test.
      * @param moodle_url|string $url
      * @param string|null $msg
      * @throws moodle_exception
@@ -361,7 +262,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * @return null
+     * Return the sso cookie contents if the cookie exists
+     * @return null|string
      */
     public function get_sso_cookie()
     {
@@ -375,7 +277,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     *
+     * Mark the sso cookie as expired
      */
     protected function expire_sso_cookie()
     {
@@ -383,9 +285,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
+     * Obtain and decrypt (if necessary) the userid stored either in the token parameter
+     * or SSO Cookie.
+     *  
      * @return null|string
      */
-    protected function get_imis_id()
+    public function get_imis_id()
     {
         $imis_id = null;
 
@@ -427,7 +332,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * Return a user record given an imis_id.
+     * Return a Moodle user record given an imis_id.
      *
      * @param string $imis_id
      * @return mixed|null
@@ -462,6 +367,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
+     * Fetch the User's contact data from IMIS
      * @param $imis_id
      * @return array
      */
@@ -485,7 +391,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * Get the user profile data.
+     * Update the user's Moodle profile to match their IMIS profile.
      *
      * @param stdClass $user
      * @return array
@@ -519,6 +425,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
             if (!$iscustom) {
                 $key = strtolower($key);
             }
+
+            // Skip fields that should never be updated or do not exist in Moodle
             if ((!property_exists($origuser, $key) && !$iscustom)
                 or $key === 'username'
                 or $key === 'id'
@@ -543,20 +451,20 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 && !empty($lock)
                 && ($update === 'onlogin')
                 && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
-                && (string)$origval !== (string)$value;
+                && (string) $origval !== (string) $value;
 
             if ($updateable) {
-                $newuser[$key] = (string)$value;
+                $newuser[$key] = (string) $value;
             }
         }
 
         if ($newuser) {
             $newuser['id'] = $origuser->id;
             $newuser['timemodified'] = time();
-            user_update_user((object)$newuser, false, false);
+            user_update_user((object) $newuser, false, false);
 
             // Save user profile data.
-            profile_save_data((object)$newuser);
+            profile_save_data((object) $newuser);
 
             // Trigger event.
             \core\event\user_updated::create_from_userid($newuser['id'])->trigger();
@@ -570,8 +478,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @return \local_imisbridge\service_proxy
      */
-    protected
-    function get_service_proxy()
+    protected function get_service_proxy()
     {
         return new \local_imisbridge\service_proxy();
     }
@@ -582,8 +489,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string $val
      * @return null|string
      */
-    protected
-    function decrypt($val)
+    protected function decrypt($val)
     {
         $svc = $this->get_service_proxy();
         return $svc->decrypt($val);

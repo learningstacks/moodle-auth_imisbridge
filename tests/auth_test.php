@@ -131,14 +131,14 @@ class auth_imisbridge_testcase extends test_base
         $auth = new test_subject();
         $config = $auth->get_config();
 
-        $this->assertSame('', $config->sso_login_url);
-        $this->assertSame('', $config->sso_logout_url);
-        $this->assertSame('', $config->sso_cookie_name);
-        $this->assertSame('/', $config->sso_cookie_path);
-        $this->assertSame('', $config->sso_cookie_domain);
-        $this->assertSame('1', $config->sso_cookie_remove_on_logout);
-        $this->assertSame('0', $config->sso_cookie_is_encrypted);
-        $this->assertSame('0', $config->synch_profile);
+        $this->assertEquals('', $config->sso_login_url);
+        $this->assertEquals('', $config->sso_logout_url);
+        $this->assertEquals('MoodleSSO', $config->sso_cookie_name);
+        $this->assertEquals('/', $config->sso_cookie_path);
+        $this->assertEquals('', $config->sso_cookie_domain);
+        $this->assertEquals('1', $config->sso_cookie_remove_on_logout);
+        $this->assertEquals('1', $config->sso_cookie_is_encrypted);
+        $this->assertEquals('1', $config->synch_profile);
     }
 
     public function test_get_config_values()
@@ -152,8 +152,8 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_path', 'sso_cookie_path', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_domain', 'sso_cookie_domain', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_is_encrypted', '1', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('synch_profile', '1', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         $auth = new test_subject();
         $config = $auth->get_config();
 
