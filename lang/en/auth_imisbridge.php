@@ -34,20 +34,6 @@ $string['redirecturllabel'] = 'Add redirect URL';
 $string['redirecturldesc'] = 'Adds redirect URL at the end of the return URL <br />
 <i>eg. http://yourdomain.com/login?redirect=http://yourmoodle.com/course</i>';
 
-$string['cookieinformation'] = 'Cookie Information';
-
-$string['sso_cookie_name_label'] = 'SSO Cookie name';
-$string['sso_cookie_name_desc'] = "The name of the cookie provided by the SSO system</i>.<br /> 
-<i>eg. USER</i>";
-
-$string['sso_cookie_domain_label'] = 'SSO Cookie domain';
-$string['sso_cookie_domain_desc'] = 'The domain of the cookie issued by the IMIS Bridge<br />
-<i>eg. .yourdomain.com</i>';
-
-$string['sso_cookie_path_label'] = 'SSO Cookie path';
-$string['sso_cookie_path_desc'] = 'The path of the cookie issued by the IMIS Bridge<br />
-<i>eg. /</i>';
-
 $string['authmetode'] = 'Authentication Method';
 $string['authmetodelabel'] = 'Authentication methods';
 $string['authmetodedesc'] = 'If selected, SSO will log in only users with selected authentication method';
@@ -59,14 +45,6 @@ $string['unabletoauth'] = 'Unable to Authenticate User';
 $string['userdoesnotexist'] = 'User does not exist';
 $string['error401'] = 'ERROR 401';
 $string['loginthroughthemainwebsite'] = 'Please login through the Main Website';
-
-$string['sso_login_url_is_required'] = 'A valid URL is required';
-$string['sso_logout_url_is_required'] = 'A valid URL is required';
-$string['sso_cookie_name_is_required'] = 'A cookie name is required';
-$string['sso_cookie_path_is_required'] = 'A valid path is required';
-$string['sso_cookie_domain_is_required'] = 'A valid domain is required';
-$string['sso_cookie_remove_on_logout_is_required'] = 'A value is required';
-$string['sso_cookie_is_encrypted_is_required'] = 'A value is required';
 
 $string['synch_profile_label'] = 'Update profile on login?';
 $string['synch_profile_desc'] = "If set to <em>Yes</em>, the users Moodle profile will be updated from IMIS after each successful login.";

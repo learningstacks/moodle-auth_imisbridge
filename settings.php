@@ -21,7 +21,7 @@ if ($ADMIN->fulltree) {
     // Introductory explanation.
     $settings->add(new admin_setting_heading('auth_imisbridge/pluginname', '',
         new lang_string('auth_imisbridgedescription', 'auth_imisbridge')));
-        
+
 
     $yesno = array(
         '0' => new lang_string('no'),
@@ -29,42 +29,26 @@ if ($ADMIN->fulltree) {
     );
 
     $settings->add(new admin_setting_heading('auth_imisbridge/ssoinformation', '',
-    new lang_string('ssoinformation', 'auth_imisbridge')));
+        new lang_string('ssoinformation', 'auth_imisbridge')));
 
     $settings->add(new admin_setting_configtext('auth_imisbridge/sso_login_url',
-    get_string('sso_login_url_label', 'auth_imisbridge'),
-    get_string('sso_login_url_desc', 'auth_imisbridge'), '', PARAM_URL));
+        get_string('sso_login_url_label', 'auth_imisbridge'),
+        get_string('sso_login_url_desc', 'auth_imisbridge'), '', PARAM_URL));
 
     $settings->add(new admin_setting_configtext('auth_imisbridge/sso_logout_url',
-    get_string('sso_logout_url_label', 'auth_imisbridge'),
-    get_string('sso_logout_url_desc', 'auth_imisbridge'), '', PARAM_URL));
+        get_string('sso_logout_url_label', 'auth_imisbridge'),
+        get_string('sso_logout_url_desc', 'auth_imisbridge'), '', PARAM_URL));
 
-    $settings->add(new admin_setting_configtext('auth_imisbridge/sso_cookie_name',
-    get_string('sso_cookie_name_label', 'auth_imisbridge'),
-    get_string('sso_cookie_name_desc', 'auth_imisbridge'), 'MoodleSSO', PARAM_RAW));
-
-    $settings->add(new admin_setting_configtext('auth_imisbridge/sso_cookie_path',
-    get_string('sso_cookie_path_label', 'auth_imisbridge'),
-    get_string('sso_cookie_path_desc', 'auth_imisbridge'), '/', PARAM_RAW));
-
-    $settings->add(new admin_setting_configtext('auth_imisbridge/sso_cookie_domain',
-    get_string('sso_cookie_domain_label', 'auth_imisbridge'),
-    get_string('sso_cookie_domain_desc', 'auth_imisbridge'), '', PARAM_RAW));
-
-    $settings->add(new admin_setting_configselect('auth_imisbridge/sso_cookie_remove_on_logout',
-    new lang_string('sso_cookie_remove_on_logout_label', 'auth_imisbridge'),
-    new lang_string('sso_cookie_remove_on_logout_desc', 'auth_imisbridge'), 1, $yesno));
-
-     $settings->add(new admin_setting_configselect('auth_imisbridge/synch_profile',
-    new lang_string('synch_profile_label', 'auth_imisbridge'),
-    new lang_string('synch_profile_desc', 'auth_imisbridge'), 1, $yesno));
+    $settings->add(new admin_setting_configselect('auth_imisbridge/synch_profile',
+        new lang_string('synch_profile_label', 'auth_imisbridge'),
+        new lang_string('synch_profile_desc', 'auth_imisbridge'), 1, $yesno));
 
     // Display locking / mapping of profile fields.
     $authplugin = get_auth_plugin('imisbridge');
-    $help ='';
+    $help = '';
     $help .= get_string('auth_updatelocal_expl', 'auth');
     $help .= get_string('auth_fieldlock_expl', 'auth');
 
     display_auth_lock_options($settings, $authplugin->authtype, $authplugin->userfields, $help, true, false,
-            $authplugin->get_custom_user_profile_fields());
+        $authplugin->get_custom_user_profile_fields());
 }

@@ -43,7 +43,6 @@ class auth_imisbridge_testcase extends test_base
     public function setUp()
     {
         global $CFG;
-        $_COOKIE = [];
         $CFG->debugdeveloper = false;
         $CFG->debug = 0;
     }
@@ -71,9 +70,6 @@ class auth_imisbridge_testcase extends test_base
         $auth = new \auth_plugin_imisbridge();
         $this->assertEquals('', $auth->config->sso_login_url);
         $this->assertEquals('', $auth->config->sso_logout_url);
-        $this->assertEquals('MoodleSSO', $auth->config->sso_cookie_name);
-        $this->assertEquals('/', $auth->config->sso_cookie_path);
-        $this->assertEquals('', $auth->config->sso_cookie_domain);
         $this->assertEquals('1', $auth->config->synch_profile);
     }
 
@@ -85,18 +81,12 @@ class auth_imisbridge_testcase extends test_base
         $this->resetAfterTest(true);
         set_config('sso_login_url', 'sso_login_url', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_logout_url', 'sso_logout_url', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_name', 'sso_cookie_name', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_path', 'sso_cookie_path', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_domain', 'sso_cookie_domain', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = new \auth_plugin_imisbridge();
 
         $this->assertSame('sso_login_url', $auth->config->sso_login_url);
         $this->assertSame('sso_logout_url', $auth->config->sso_logout_url);
-        $this->assertSame('sso_cookie_name', $auth->config->sso_cookie_name);
-        $this->assertSame('sso_cookie_path', $auth->config->sso_cookie_path);
-        $this->assertSame('sso_cookie_domain', $auth->config->sso_cookie_domain);
         $this->assertSame('0', $auth->config->synch_profile);
     }
 
@@ -106,85 +96,54 @@ class auth_imisbridge_testcase extends test_base
     public function data_test_get_imis_id()
     {
         return [
-            'cookie' => [
-                'cookie' => 'encrypted_cookie',
-                'token' => null,
-                'wantsurl' => null,
-                'expected_result' => 'unencrypted_encrypted_cookie',
-                'decrypt_throws' => false
-            ],
             'token' => [
-                'cookie' => null,
                 'token' => 'encrypted_token',
                 'wantsurl' => null,
                 'expected_result' => 'unencrypted_encrypted_token',
                 'decrypt_throws' => false
             ],
             'token in wantsaurl' => [
-                'cookie' => null,
                 'token' => null,
                 'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
                 'expected_result' => 'unencrypted_encrypted_token_in_wantsurl',
                 'decrypt_throws' => false
             ],
-            'No token or cookie' => [
-                'cookie' => null,
+            'No token or wantsurl' => [
                 'token' => null,
                 'wantsurl' => null,
                 'expected_result' => null,
                 'decrypt_throws' => false
             ],
             'Decrypt fails' => [
-                'cookie' => null,
                 'token' => 'encrypted_token',
                 'wantsurl' => null,
                 'expected_result' => null,
                 'decrypt_throws' => true
             ],
-            'token overrides wantsurl and cookie' => [
-                'cookie' => 'encrypted_cookie',
+            'token overrides wantsurl' => [
                 'token' => 'encrypted_token',
                 'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
                 'expected_result' => 'unencrypted_encrypted_token',
                 'decrypt_throws' => false
-            ],
-            'token in wantsurl overrides cookie' => [
-                'cookie' => 'unencrypted_cookie',
-                'token' => null,
-                'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
-                'expected_result' => 'unencrypted_encrypted_token_in_wantsurl',
-                'decrypt_throws' => false
-            ],
+            ]
         ];
     }
 
     /**
      * @dataProvider data_test_get_imis_id
-     * @param $cookie
      * @param $token
      * @param $wantsurl
      * @param $expected_result
      * @param $decrypt_throws
      */
-    public function test_get_imis_id($cookie, $token, $wantsurl, $expected_result, $decrypt_throws)
+    public function test_get_imis_id($token, $wantsurl, $expected_result, $decrypt_throws)
     {
-        global $_COOKIE, $_GET, $_SESSION;
-
         $this->resetAfterTest(true);
-
-        set_config('sso_cookie_path', '/', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
 
         if ($token) {
             $_GET['token'] = $token;
         } else {
             unset($_GET['token']);
-        }
-
-        if ($cookie) {
-            $_COOKIE['cookiename'] = $cookie;
-        } else {
-            unset($_COOKIE['cookiename']);
         }
 
         if ($wantsurl) {
@@ -198,7 +157,7 @@ class auth_imisbridge_testcase extends test_base
             $svc->expects($this->once())
                 ->method('decrypt')
                 ->will($this->throwException(new \Exception));
-        } elseif (!$cookie && !$token && !$wantsurl) {
+        } elseif (!$token && !$wantsurl) {
             $svc->expects($this->never())
                 ->method('decrypt');
         } else {

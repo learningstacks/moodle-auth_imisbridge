@@ -238,7 +238,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
             }
         }
 
-        // Either user was not found, the cookie was not present, or imis_id not valid, user was not active...
+        // Either user was not found, imis_id was not provided, imis_id not valid, user was not active.
         $this->redirect_to_sso_login($courseid, $redirect_msg); // Does not return if redirect succeeds
 
         // Else authentication failed
@@ -275,23 +275,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * Return the sso cookie contents if the cookie exists
-     * @return null|string
-     */
-    protected function get_sso_cookie()
-    {
-        $cookie = null;
-
-        if (!empty($_COOKIE[$this->config->sso_cookie_name])) {
-            $cookie = $_COOKIE[$this->config->sso_cookie_name]; // Contains id
-        }
-
-        return $cookie;
-    }
-
-    /**
-     * Obtain and decrypt (if necessary) the userid stored either in the token parameter
-     * or SSO Cookie.
+     * Obtain and decrypt the userid stored in the token parameter
      *
      * @return null|string
      * @throws coding_exception
@@ -309,14 +293,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
             if (isset($_SESSION['SESSION']->wantsurl)) {
                 $url = new moodle_url($_SESSION['SESSION']->wantsurl);
                 $token = $url->get_param('token');
-            }
-        }
-
-        // Perhaps we have a cookie?
-        if (is_null($token)) {
-            $cookie = $this->get_sso_cookie();
-            if ($cookie) {
-                $token = $cookie;
             }
         }
 

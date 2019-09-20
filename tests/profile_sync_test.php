@@ -88,9 +88,6 @@ class profile_sync_testcase extends test_base
      */
     public function setUp()
     {
-        $_COOKIE = [];
-
-
     }
 
     /**
