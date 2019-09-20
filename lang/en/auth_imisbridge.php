@@ -36,7 +36,6 @@ $string['redirecturldesc'] = 'Adds redirect URL at the end of the return URL <br
 
 $string['cookieinformation'] = 'Cookie Information';
 
-
 $string['sso_cookie_name_label'] = 'SSO Cookie name';
 $string['sso_cookie_name_desc'] = "The name of the cookie provided by the SSO system</i>.<br /> 
 <i>eg. USER</i>";
@@ -49,10 +48,7 @@ $string['sso_cookie_path_label'] = 'SSO Cookie path';
 $string['sso_cookie_path_desc'] = 'The path of the cookie issued by the IMIS Bridge<br />
 <i>eg. /</i>';
 
-$string['sso_cookie_remove_on_logout_label'] = 'Remove cookie on log out?';
-$string['sso_cookie_remove_on_logout_desc'] = "Should the SSO cookie be removed when the user logs out?";
 $string['authmetode'] = 'Authentication Method';
-
 $string['authmetodelabel'] = 'Authentication methods';
 $string['authmetodedesc'] = 'If selected, SSO will log in only users with selected authentication method';
 

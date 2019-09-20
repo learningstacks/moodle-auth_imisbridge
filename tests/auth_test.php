@@ -74,7 +74,6 @@ class auth_imisbridge_testcase extends test_base
         $this->assertEquals('MoodleSSO', $auth->config->sso_cookie_name);
         $this->assertEquals('/', $auth->config->sso_cookie_path);
         $this->assertEquals('', $auth->config->sso_cookie_domain);
-        $this->assertEquals('1', $auth->config->sso_cookie_remove_on_logout);
         $this->assertEquals('1', $auth->config->synch_profile);
     }
 
@@ -89,7 +88,6 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_name', 'sso_cookie_name', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_path', 'sso_cookie_path', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_domain', 'sso_cookie_domain', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = new \auth_plugin_imisbridge();
@@ -99,7 +97,6 @@ class auth_imisbridge_testcase extends test_base
         $this->assertSame('sso_cookie_name', $auth->config->sso_cookie_name);
         $this->assertSame('sso_cookie_path', $auth->config->sso_cookie_path);
         $this->assertSame('sso_cookie_domain', $auth->config->sso_cookie_domain);
-        $this->assertSame('0', $auth->config->sso_cookie_remove_on_logout);
         $this->assertSame('0', $auth->config->synch_profile);
     }
 

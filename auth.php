@@ -289,14 +289,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $cookie;
     }
 
-//    /**
-//     * Mark the sso cookie as expired
-//     */
-//    protected function expire_sso_cookie()
-//    {
-//        setcookie($this->config->sso_cookie_name, "", time() - 3600, $this->config->sso_cookie_path, $this->config->sso_cookie_domain); // domain may be null
-//    }
-
     /**
      * Obtain and decrypt (if necessary) the userid stored either in the token parameter
      * or SSO Cookie.
