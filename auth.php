@@ -157,7 +157,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param null $confirmsecret
      */
     public function user_confirm($imis_id, $confirmsecret = null)
-    { }
+    {
+    }
 
     /**
      *
@@ -166,11 +167,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
     {
         global $redirect;
 
-        if ($this->config->sso_cookie_remove_on_logout == 1) {
-            $this->expire_sso_cookie();
+        if (isset($this->config->sso_logout_url) && !empty($this->config->sso_logout_url)) {
+            $redirect = $this->config->sso_logout_url;
         }
-
-        $redirect = $this->config->sso_logout_url;
     }
 
     /**
@@ -219,9 +218,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         // Determine course that is to be viewed
         // Bridge only redirects to course/view.php with courseid parameter
-        $courseid = isset($COURSE->id) ? $COURSE->id : 1;
+        $courseid = !empty($COURSE->id) ? $COURSE->id : 1;
+        $redirect_msg = null;
 
-        // The imis_id of the user is passed in the configured cookie.
         $imis_id = $this->get_imis_id();
         if ($imis_id) {
             $user = $this->get_user_by_imis_id($imis_id);
@@ -235,29 +234,30 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 // redirect function will not return
                 // return value is returned to support unit test
             } else {
-                throw new moodle_exception('No user with that IMIS_ID');
+                $redirect_msg = get_string('moodle_user_not_found', 'auth_imisbridge', $imis_id);
             }
         }
 
         // Either user was not found, the cookie was not present, or imis_id not valid, user was not active...
-        $this->redirect_to_sso_login($courseid); // Does not return if redirect succeeds
+        $this->redirect_to_sso_login($courseid, $redirect_msg); // Does not return if redirect succeeds
 
         // Else authentication failed
         return false;
     }
 
     /**
-     * @param int $courseid
+     * @param int $courseid After SSO login IMIS will redirect to this course
+     * @param null $msg Will be displayed to the user before the redirect occurs
      * @return bool
      * @throws moodle_exception
      */
-    protected function redirect_to_sso_login($courseid = 1)
+    public function redirect_to_sso_login($courseid, $msg = null)
     {
         $params = ['id' => $courseid];
 
-        if ($this->config->sso_login_url) {
+        if (!empty($this->config->sso_login_url)) {
             $sso_login_url = new moodle_url($this->config->sso_login_url, $params);
-            $this->redirect($sso_login_url->out());
+            $this->redirect($sso_login_url->out(), $msg);
         }
 
         return false;
@@ -278,7 +278,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * Return the sso cookie contents if the cookie exists
      * @return null|string
      */
-    public function get_sso_cookie()
+    protected function get_sso_cookie()
     {
         $cookie = null;
 
@@ -289,13 +289,13 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return $cookie;
     }
 
-    /**
-     * Mark the sso cookie as expired
-     */
-    protected function expire_sso_cookie()
-    {
-        setcookie($this->config->sso_cookie_name, "", time() - 3600, $this->config->sso_cookie_path, $this->config->sso_cookie_domain); // domain may be null
-    }
+//    /**
+//     * Mark the sso cookie as expired
+//     */
+//    protected function expire_sso_cookie()
+//    {
+//        setcookie($this->config->sso_cookie_name, "", time() - 3600, $this->config->sso_cookie_path, $this->config->sso_cookie_domain); // domain may be null
+//    }
 
     /**
      * Obtain and decrypt (if necessary) the userid stored either in the token parameter
@@ -351,7 +351,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
      *
      * @param string $imis_id
      * @return mixed|null
-     * @throws dml_exception
      */
     public function get_user_by_imis_id($imis_id)
     {
@@ -359,13 +358,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         $user = null;
         $auth = 'manual';
-
-        $user = $DB->get_record('user', array('idnumber' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
-        if ($user === false) {
+        try {
+            $user = $DB->get_record('user', array('idnumber' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
+            if ($user === false) {
+                $user = null;
+            }
+        } catch (dml_exception $ex) {
             $user = null;
         }
-
-        // TODO: Consider logging/reporting errors for each result state suspended, deleted, not found
 
         return $user;
     }
@@ -475,20 +475,20 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 && !empty($lock)
                 && ($update === 'onlogin')
                 && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
-                && (string) $origval !== (string) $value;
+                && (string)$origval !== (string)$value;
 
             if ($updateable) {
-                $newuser[$key] = (string) $value;
+                $newuser[$key] = (string)$value;
             }
         }
 
         if ($newuser) {
             $newuser['id'] = $origuser->id;
             $newuser['timemodified'] = time();
-            user_update_user((object) $newuser, false, false);
+            user_update_user((object)$newuser, false, false);
 
             // Save user profile data.
-            profile_save_data((object) $newuser);
+            profile_save_data((object)$newuser);
 
             // Trigger event.
             \core\event\user_updated::create_from_userid($newuser['id'])->trigger();

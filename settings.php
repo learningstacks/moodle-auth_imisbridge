@@ -66,12 +66,8 @@ if ($ADMIN->fulltree) {
     // Display locking / mapping of profile fields.
     $authplugin = get_auth_plugin('imisbridge');
     $help ='';
-    // $help  = get_string('auth_ldapextrafields', 'auth_ldap');
     $help .= get_string('auth_updatelocal_expl', 'auth');
     $help .= get_string('auth_fieldlock_expl', 'auth');
-    // $help .= get_string('auth_updateremote_expl', 'auth');
-    // $help .= '<hr />';
-    // $help .= get_string('auth_updateremote_ldap', 'auth');
 
     display_auth_lock_options($settings, $authplugin->authtype, $authplugin->userfields, $help, true, false,
             $authplugin->get_custom_user_profile_fields());

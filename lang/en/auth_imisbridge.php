@@ -80,7 +80,7 @@ $string['sso_cookie_is_encrypted_is_required'] = 'A value is required';
 $string['synch_profile_label'] = 'Update profile on login?';
 $string['synch_profile_desc'] = "If set to <em>Yes</em>, the users Moodle profile will be updated from IMIS after each successful login.";
 $string['synch_profile_err'] = "A value is required.";
-
+$string['moodle_user_not_found'] = 'The Moodle user with imis_id = $a was not found';
 
 $string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be updated from IMIS:</p>
 <ol>
