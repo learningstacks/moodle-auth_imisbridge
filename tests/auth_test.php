@@ -75,7 +75,6 @@ class auth_imisbridge_testcase extends test_base
         $this->assertEquals('/', $auth->config->sso_cookie_path);
         $this->assertEquals('', $auth->config->sso_cookie_domain);
         $this->assertEquals('1', $auth->config->sso_cookie_remove_on_logout);
-        $this->assertEquals('1', $auth->config->sso_cookie_is_encrypted);
         $this->assertEquals('1', $auth->config->synch_profile);
     }
 
@@ -91,7 +90,6 @@ class auth_imisbridge_testcase extends test_base
         set_config('sso_cookie_path', 'sso_cookie_path', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_domain', 'sso_cookie_domain', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_remove_on_logout', '0', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_cookie_is_encrypted', '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = new \auth_plugin_imisbridge();
@@ -102,7 +100,6 @@ class auth_imisbridge_testcase extends test_base
         $this->assertSame('sso_cookie_path', $auth->config->sso_cookie_path);
         $this->assertSame('sso_cookie_domain', $auth->config->sso_cookie_domain);
         $this->assertSame('0', $auth->config->sso_cookie_remove_on_logout);
-        $this->assertSame('0', $auth->config->sso_cookie_is_encrypted);
         $this->assertSame('0', $auth->config->synch_profile);
     }
 
@@ -112,51 +109,24 @@ class auth_imisbridge_testcase extends test_base
     public function data_test_get_imis_id()
     {
         return [
-            'Unencrypted cookie' => [
-                'cookie' => 'unencrypted_cookie',
-                'token' => null,
-                'wantsurl' => null,
-                'encrypted' => false,
-                'expected_result' => 'unencrypted_cookie',
-                'decrypt_throws' => false
-            ],
-            'Unencrypted token' => [
-                'cookie' => null,
-                'token' => 'unencrypted_token',
-                'wantsurl' => null,
-                'encrypted' => false,
-                'expected_result' => 'unencrypted_token',
-                'decrypt_throws' => false
-            ],
-            'Encrypted cookie' => [
+            'cookie' => [
                 'cookie' => 'encrypted_cookie',
                 'token' => null,
                 'wantsurl' => null,
-                'encrypted' => true,
                 'expected_result' => 'unencrypted_encrypted_cookie',
                 'decrypt_throws' => false
             ],
-            'Encrypted token' => [
+            'token' => [
                 'cookie' => null,
                 'token' => 'encrypted_token',
                 'wantsurl' => null,
-                'encrypted' => true,
                 'expected_result' => 'unencrypted_encrypted_token',
                 'decrypt_throws' => false
             ],
-            'Unencrypted token_in_wantsaurl' => [
-                'cookie' => null,
-                'token' => null,
-                'wantsurl' => 'https://any.com/?token=unencrypted_token_in_wantsurl',
-                'encrypted' => false,
-                'expected_result' => 'unencrypted_token_in_wantsurl',
-                'decrypt_throws' => false
-            ],
-            'Encrypted token_in_wantsaurl' => [
+            'token in wantsaurl' => [
                 'cookie' => null,
                 'token' => null,
                 'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
-                'encrypted' => true,
                 'expected_result' => 'unencrypted_encrypted_token_in_wantsurl',
                 'decrypt_throws' => false
             ],
@@ -164,7 +134,6 @@ class auth_imisbridge_testcase extends test_base
                 'cookie' => null,
                 'token' => null,
                 'wantsurl' => null,
-                'encrypted' => false,
                 'expected_result' => null,
                 'decrypt_throws' => false
             ],
@@ -172,24 +141,21 @@ class auth_imisbridge_testcase extends test_base
                 'cookie' => null,
                 'token' => 'encrypted_token',
                 'wantsurl' => null,
-                'encrypted' => true,
                 'expected_result' => null,
                 'decrypt_throws' => true
             ],
             'token overrides wantsurl and cookie' => [
-                'cookie' => 'unencrypted_cookie',
-                'token' => 'unencrypted_token',
-                'wantsurl' => 'https://any.com/?token=unencrypted_token_in_wantsurl',
-                'encrypted' => false,
-                'expected_result' => 'unencrypted_token',
+                'cookie' => 'encrypted_cookie',
+                'token' => 'encrypted_token',
+                'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
+                'expected_result' => 'unencrypted_encrypted_token',
                 'decrypt_throws' => false
             ],
             'token in wantsurl overrides cookie' => [
                 'cookie' => 'unencrypted_cookie',
                 'token' => null,
-                'wantsurl' => 'https://any.com/?token=unencrypted_token_in_wantsurl',
-                'encrypted' => false,
-                'expected_result' => 'unencrypted_token_in_wantsurl',
+                'wantsurl' => 'https://any.com/?token=encrypted_token_in_wantsurl',
+                'expected_result' => 'unencrypted_encrypted_token_in_wantsurl',
                 'decrypt_throws' => false
             ],
         ];
@@ -197,19 +163,18 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_get_imis_id
-     * @param string"null $method 'token', 'cookie' or null
-     * @param bool $encrypted if true configure for encrypted toke/cookie
-     * @param string|null $in The incoming (possible encrypted) value
-     * @param string|null $expected_result The expected result
-     * @param bool $decrypt_throws Simulate a decryption error if true
+     * @param $cookie
+     * @param $token
+     * @param $wantsurl
+     * @param $expected_result
+     * @param $decrypt_throws
      */
-    public function test_get_imis_id($cookie, $token, $wantsurl, $encrypted, $expected_result, $decrypt_throws)
+    public function test_get_imis_id($cookie, $token, $wantsurl, $expected_result, $decrypt_throws)
     {
         global $_COOKIE, $_GET, $_SESSION;
 
         $this->resetAfterTest(true);
 
-        set_config('sso_cookie_is_encrypted', $encrypted ? '1' : '0', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_path', '/', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('sso_cookie_name', 'cookiename', auth_plugin_imisbridge::COMPONENT_NAME);
 
@@ -232,12 +197,13 @@ class auth_imisbridge_testcase extends test_base
         }
 
         $svc = $this->createMock(iServiceProxy::class);
-        if (!$encrypted) {
-            $svc->expects($this->never())->method('decrypt');
-        } elseif ($decrypt_throws) {
+        if ($decrypt_throws) {
             $svc->expects($this->once())
                 ->method('decrypt')
                 ->will($this->throwException(new \Exception));
+        } elseif (!$cookie && !$token && !$wantsurl) {
+            $svc->expects($this->never())
+                ->method('decrypt');
         } else {
             $svc->expects($this->once())
                 ->method('decrypt')
@@ -270,7 +236,12 @@ class auth_imisbridge_testcase extends test_base
     /**
      * @group get_user_by_imis_id
      * @dataProvider data_test_get_user_by_imis_id
-     * @throws \dml_exception
+     * @param $imis_id
+     * @param $user_idnumber
+     * @param $user_suspended
+     * @param $user_deleted
+     * @param $user_auth
+     * @param $expect_success
      * @throws \dml_exception
      */
     public function test_get_user_by_imis_id($imis_id, $user_idnumber, $user_suspended, $user_deleted, $user_auth, $expect_success)
@@ -315,6 +286,9 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_logout_page_hook
+     * @param $sso_logout_url
+     * @param $expected_redirect
+     * @throws \dml_exception
      */
     public function test_logout_page_hook($sso_logout_url, $expected_redirect)
     {
@@ -448,8 +422,11 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_authenticate_user_sso_redirect
-     * @param $wantsurl
-     * @param $expected_url
+     * @param $imis_id
+     * @param $user_idnumber
+     * @param $course_id
+     * @param $expected_redirect_course_id
+     * @param $expected_msg
      */
     public function test_authenticate_user_sso_redirect($imis_id, $user_idnumber, $course_id, $expected_redirect_course_id, $expected_msg)
     {
@@ -487,6 +464,7 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_authenticate_user_synch_profile
+     * @param $synch_enabled
      */
     public function test_authenticate_user_synch_profile($synch_enabled)
     {
@@ -529,7 +507,11 @@ class auth_imisbridge_testcase extends test_base
 
     /**
      * @dataProvider data_test_redirect_to_sso_login
-     *
+     * @param $sso_login_url
+     * @param $courseid
+     * @param $msg
+     * @param $expect_redirect
+     * @throws \moodle_exception
      */
     public function test_redirect_to_sso_login($sso_login_url, $courseid, $msg, $expect_redirect)
     {

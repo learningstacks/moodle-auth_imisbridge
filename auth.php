@@ -329,17 +329,13 @@ class auth_plugin_imisbridge extends auth_plugin_base
         }
 
         if (!empty($token)) {
-            if ($this->config->sso_cookie_is_encrypted) { // Cookie is encrypted
-                try {
-                    $svc = $this->get_service_proxy();
-                    $imis_id = $svc->decrypt($token); // null returned on error
-                    $this->log("token decryption suceeded ({$imis_id})");
-                } catch (Exception $e) {
-                    debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
-                    $imis_id = null;
-                }
-            } else {
-                $imis_id = $token; // imis_id is not encrypted (dev only)
+            try {
+                $svc = $this->get_service_proxy();
+                $imis_id = $svc->decrypt($token); // null returned on error
+                $this->log("token decryption suceeded ({$imis_id})");
+            } catch (Exception $e) {
+                debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
+                $imis_id = null;
             }
         }
 

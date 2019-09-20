@@ -51,11 +51,6 @@ $string['sso_cookie_path_desc'] = 'The path of the cookie issued by the IMIS Bri
 
 $string['sso_cookie_remove_on_logout_label'] = 'Remove cookie on log out?';
 $string['sso_cookie_remove_on_logout_desc'] = "Should the SSO cookie be removed when the user logs out?";
-
-$string['sso_cookie_is_encrypted_label'] = 'Is the cookie encrypted?';
-$string['sso_cookie_is_encrypted_desc'] = "If checked, the cookie must be decrypted.";
-
-
 $string['authmetode'] = 'Authentication Method';
 
 $string['authmetodelabel'] = 'Authentication methods';

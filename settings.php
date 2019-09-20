@@ -55,11 +55,7 @@ if ($ADMIN->fulltree) {
     new lang_string('sso_cookie_remove_on_logout_label', 'auth_imisbridge'),
     new lang_string('sso_cookie_remove_on_logout_desc', 'auth_imisbridge'), 1, $yesno));
 
-    $settings->add(new admin_setting_configcheckbox('auth_imisbridge/sso_cookie_is_encrypted',
-    new lang_string('sso_cookie_is_encrypted_label', 'auth_imisbridge'),
-    new lang_string('sso_cookie_is_encrypted_desc', 'auth_imisbridge'), 1));
-
-    $settings->add(new admin_setting_configselect('auth_imisbridge/synch_profile',
+     $settings->add(new admin_setting_configselect('auth_imisbridge/synch_profile',
     new lang_string('synch_profile_label', 'auth_imisbridge'),
     new lang_string('synch_profile_desc', 'auth_imisbridge'), 1, $yesno));
 
