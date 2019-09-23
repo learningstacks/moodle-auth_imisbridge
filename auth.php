@@ -9,7 +9,7 @@
 
 /**
  * @package   auth_imisbridge
- * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
+ * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
 

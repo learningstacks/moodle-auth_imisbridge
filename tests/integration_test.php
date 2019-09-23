@@ -11,7 +11,7 @@
  *
  *
  * @package   auth_imisbridge
- * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
+ * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
 namespace auth_imisbridge\tests;
@@ -26,7 +26,7 @@ require_once(__DIR__.'/test_base.php');
  *
  * @package auth_imisbridge
  * @category auth
- * @copyright 2017 Learning Stacks LLC
+ * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
 class auth_imisbridge_integration_testcase extends test_base

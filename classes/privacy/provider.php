@@ -9,7 +9,7 @@
 
 /**
  * @package   auth_imisbridge
- * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
+ * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
 
@@ -18,7 +18,7 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Privacy Subsystem for auth_cas implementing null_provider.
  *
- * @copyright  2018 Carlos Escobedo <carlos@moodle.com>
+ * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class provider implements \core_privacy\local\metadata\null_provider {
