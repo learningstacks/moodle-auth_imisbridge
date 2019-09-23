@@ -58,3 +58,5 @@ $string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be
 <li>Leave <em>Update External</em> set to <em>Never</em>.</li>
 <li>Set <em>Lock Value</em> to <em>Unlocked</em>. (Note: If you set this to <em>Unlocked if empty</em>, it will be updated only once. Once a value has been entered no more updates will occur.)</li>
 </ol>";
+
+$string['privacy:metadata'] = 'The IMISBRIDGE (SSO) authentication plugin does not store any personal data.';

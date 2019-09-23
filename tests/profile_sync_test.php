@@ -8,9 +8,7 @@
 // of Learning Stacks LLC.
 
 /**
- *
- *
- * @package   auth_imisbridge
+ * * @package   auth_imisbridge
  * @copyright 2017 onwards Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
