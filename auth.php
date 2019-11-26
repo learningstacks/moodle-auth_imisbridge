@@ -73,7 +73,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function user_login($imis_id, $password)
     {
-        $this->redirect_to_sso_login();
+        $this->redirect_to_sso_login(1);
     }
 
     /**
@@ -88,7 +88,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function user_update_password($user, $newpassword)
     {
-        $this->redirect_to_sso_login();
+        $this->redirect_to_sso_login(1);
     }
 
     /**

@@ -22,6 +22,6 @@ $plugin->release = '2.0.0';             // Logging, context
 $plugin->requires  = 2016120502;        // Requires this Moodle version
 $plugin->component = 'auth_imisbridge';       // Full name of the plugin (used for diagnostics)
 $plugin->dependencies = array(
-    'local_imisbridge' => 2017040400,
+    'local_imisbridge' => 2019112401,
 );
 
