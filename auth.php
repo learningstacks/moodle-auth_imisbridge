@@ -213,7 +213,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         // Determine the URL to which user should be redirected upon successful authentication
         $SESSION = $_SESSION['SESSION'];
-        $urltogo = isset($SESSION->wantsurl) ? $SESSION->wantsurl : $CFG->wwwroot . '/';
+        $urltogo = isset($SESSION->wantsurl) ? $SESSION->wantsurl : $CFG->wwwroot;
         unset($SESSION->wantsurl);
 
         // Determine course that is to be viewed
@@ -221,20 +221,24 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $courseid = !empty($COURSE->id) ? $COURSE->id : 1;
         $redirect_msg = null;
 
-        $imis_id = $this->get_imis_id();
-        if ($imis_id) {
-            $user = $this->get_user_by_imis_id($imis_id);
-            if ($user) {
-                if ($this->config->synch_profile) {
-                    $user = $this->synch_user_record($user);
+        $token = $this->get_token();
+        if ($token) {
+            $imis_profile = $this->get_service_proxy()->get_imis_profile($token);
+            if ($imis_profile) {
+                $imis_id = $imis_profile['CustomerID'];
+                $user = $this->get_user_by_imis_id($imis_id);
+                if ($user) {
+                    if ($this->config->synch_profile) {
+                        $user = $this->synch_user_record($user, $imis_profile);
+                    }
+                    $this->complete_user_login($user);         // Complete setting up the $USER
+                    $this->log('User logged in ', $USER);
+                    return $this->redirect($urltogo);   // Send to originally requested url
+                    // redirect function will not return
+                    // return value is returned to support unit test
+                } else {
+                    $redirect_msg = get_string('moodle_user_not_found', 'auth_imisbridge', $imis_id);
                 }
-                $this->complete_user_login($user);         // Complete setting up the $USER
-                $this->log('User logged in ', $USER);
-                return $this->redirect($urltogo);   // Send to originally requested url
-                // redirect function will not return
-                // return value is returned to support unit test
-            } else {
-                $redirect_msg = get_string('moodle_user_not_found', 'auth_imisbridge', $imis_id);
             }
         }
 
@@ -256,8 +260,8 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $params = ['id' => $courseid];
 
         if (!empty($this->config->sso_login_url)) {
-            $sso_login_url = new moodle_url($this->config->sso_login_url, $params);
-            $this->redirect($sso_login_url->out(), $msg);
+            $sso_login_url = (new moodle_url($this->config->sso_login_url, $params))->out();
+            $this->redirect($sso_login_url, $msg);
         }
 
         return false;
@@ -281,7 +285,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @throws coding_exception
      * @throws moodle_exception
      */
-    public function get_imis_id()
+    protected function get_token()
     {
         $imis_id = null;
 
@@ -296,18 +300,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
             }
         }
 
-        if (!empty($token)) {
-            try {
-                $svc = $this->get_service_proxy();
-                $imis_id = $svc->decrypt($token); // null returned on error
-                $this->log("token decryption suceeded ({$imis_id})");
-            } catch (Exception $e) {
-                debugging("token decryption failed ({$e->getMessage()}", DEBUG_DEVELOPER);
-                $imis_id = null;
-            }
-        }
-
-        return $imis_id;
+        return $token;
     }
 
     /**
@@ -316,7 +309,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string $imis_id
      * @return mixed|null
      */
-    public function get_user_by_imis_id($imis_id)
+    protected function get_user_by_imis_id($imis_id)
     {
         global $DB;
 
@@ -332,30 +325,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
         }
 
         return $user;
-    }
-
-    /**
-     * Provide a map from IMIS field names to Moodle field names.
-     *
-     * @return array
-     */
-    protected function get_field_map()
-    {
-        $map = [];
-        include(__DIR__ . '/profile_field_map.php');
-        return $map;
-    }
-
-    /**
-     * Fetch the User's contact data from IMIS
-     * @param $imis_id
-     * @return array
-     */
-    protected function get_contact_info($imis_id)
-    {
-        $svc = $this->get_service_proxy();
-        $newinfo = $svc->get_contact_info($imis_id);
-        return $newinfo;
     }
 
     /**
@@ -379,28 +348,27 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * Update the user's Moodle profile to match their IMIS profile.
      *
      * @param stdClass $user
+     * @param array $imis_profile
      * @return array
      * @throws coding_exception
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function synch_user_record($user)
+    public function synch_user_record($user, $imis_profile)
     {
         global $PAGE;
 
         $PAGE->set_context(context_system::instance());
         $origuser = get_complete_user_data('id', $user->id);
         $newuser = array();
-        $imis_id = $origuser->idnumber;
-        $contact_info = $this->get_contact_info($imis_id);
-        $this->log('contact_info', $contact_info);
+        $this->log('imis_profile', $imis_profile);
         $customfields = $this->get_custom_user_profile_fields();
 
         // Map incoming date to moodle profile fields
         $flds = array_merge($this->userfields, $customfields);
         $newinfo = [];
         foreach ($flds as $fld) {
-            $val = $this->get_src_value($fld, $contact_info);
+            $val = $this->get_src_value($fld, $imis_profile);
             if (!is_null($val)) {
                 $newinfo[$fld] = $val;
             }
@@ -421,6 +389,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
                 or $key === 'auth'
                 or $key === 'mnethostid'
                 or $key === 'deleted'
+                or $key === 'idnumber'
             ) {
                 // Unknown or must not be changed.
                 continue;
@@ -469,19 +438,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
     protected function get_service_proxy()
     {
         return new \local_imisbridge\service_proxy();
-    }
-
-    /**
-     * Decrypt a string.
-     *
-     * @param string $val
-     * @return null|string
-     * @throws Exception
-     */
-    protected function decrypt($val)
-    {
-        $svc = $this->get_service_proxy();
-        return $svc->decrypt($val);
     }
 
     /**
