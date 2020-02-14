@@ -1,0 +1,10 @@
+{
+    "name": "learningstacks/moodle-auth_imisbridge",
+    "type": "moodle-auth",
+    "require": {
+        "learningstacks/moodle-local_imisbridge": "~2.1"
+    },
+    "extra": {
+        "installer-name": "imisbridge"
+    }
+}
