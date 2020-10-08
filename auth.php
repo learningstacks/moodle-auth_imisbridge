@@ -316,7 +316,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $user = null;
         $auth = 'manual';
         try {
-            $user = $DB->get_record('user', array('idnumber' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
+            $user = $DB->get_record('user', array('username' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
             if ($user === false) {
                 $user = null;
             }
