@@ -199,7 +199,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function authenticate_user()
     {
-        global $CFG, $USER, $COURSE;
+        global $CFG, $USER, $COURSE, $SESSION;
 
         // If nosso url parameter is present skip this auth
         if (!is_null(optional_param('nosso', null, PARAM_RAW))) {
@@ -211,41 +211,69 @@ class auth_plugin_imisbridge extends auth_plugin_base
             return false;
         }
 
+        $token = $this->get_token();
+        $imis_profile = empty($token) ? null : $this->get_imis_profile($token);
+        $imis_id = empty($imis_profile) ? null : $imis_profile['CustomerID'];
+        $user = empty($imis_id) ? null : $this->get_user_by_imis_id($imis_id);
+
         // Determine the URL to which user should be redirected upon successful authentication
-        $SESSION = $_SESSION['SESSION'];
         $urltogo = isset($SESSION->wantsurl) ? $SESSION->wantsurl : $CFG->wwwroot;
         unset($SESSION->wantsurl);
 
         // Determine course that is to be viewed
         // Bridge only redirects to course/view.php with courseid parameter
         $courseid = !empty($COURSE->id) ? $COURSE->id : 1;
-        $redirect_msg = null;
 
-        $token = $this->get_token();
-        if ($token) {
-            $imis_profile = $this->get_service_proxy()->get_imis_profile($token);
-            if ($imis_profile) {
-                $imis_id = $imis_profile['CustomerID'];
-                $user = $this->get_user_by_imis_id($imis_id);
-                if ($user) {
-                    if ($this->config->synch_profile) {
-                        $user = $this->synch_user_record($user, $imis_profile);
-                    }
-                    $this->complete_user_login($user);         // Complete setting up the $USER
-                    $this->log('User logged in ', $USER);
-                    return $this->redirect($urltogo);   // Send to originally requested url
-                    // redirect function will not return
-                    // return value is returned to support unit test
-                } else {
-                    $redirect_msg = get_string('moodle_user_not_found', 'auth_imisbridge', $imis_id);
-                }
-            }
+        if (empty($token)) {
+            // No token, redirect to SSO
+            $msg = get_string('no_token', 'auth_imisbridge');
+            return $this->redirect_to_sso_login($courseid, $msg); // Does not return if redirect succeeds
         }
 
-        // Either user was not found, imis_id was not provided, imis_id not valid, user was not active.
-        $this->redirect_to_sso_login($courseid, $redirect_msg); // Does not return if redirect succeeds
+        if (empty($imis_profile)) {
+            // Token but no matching IMIS profile
+            // TODO redirect to IMIS logout page if defined. If we go to sso we will loop
+            $msg = get_string('no_imis_account', 'auth_imisbridge');
+            throw new Exception($msg);
+        }
 
-        // Else authentication failed
+        if (!empty($user)) {
+
+            if ($user->deleted) {
+                $msg = get_string('deleted_user', 'auth_imisbridge', $imis_id);
+                throw new Exception($msg);
+            }
+
+            if ($user->suspended) {
+                $msg = get_string('suspended_user', 'auth_imisbridge', $imis_id);
+                throw new Exception($msg);
+            }
+
+            // We have an authenticated IMIS user and a matching, active Moodle account, log in
+            if ($this->config->synch_profile) {
+                $user = $this->synch_user_record($user->username, $imis_profile);
+            }
+            $this->complete_user_login($user); // Complete setting up the $USER
+            $this->log('User logged in ', $USER);
+            return $this->redirect($urltogo);   // Send to originally requested url
+        }
+
+        // We have an authenticated IMIS user but no matching Moodle account
+        if ($this->config->create_user) {
+            // Create new user account and log it in
+            $user = create_user_record($imis_id, generate_password(), 'manual');
+            $user = $this->synch_user_record($user->username, $imis_profile, true);
+            $this->complete_user_login($user);         // Complete setting up the $USER
+            $this->log('User logged in ', $USER);
+            return $this->redirect($urltogo);   // Send to originally requested url
+        }
+
+        // Authenticated IMIS user, no moodle user, and no create option
+        // TODO Display proper error page
+        $msg = get_string('no_moodle_account', 'auth_imisbridge', $imis_id);
+        throw new Exception($msg);
+
+        // Should never get here
         return false;
     }
 
@@ -255,13 +283,13 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @return bool
      * @throws moodle_exception
      */
-    public function redirect_to_sso_login($courseid, $msg = null)
+    public function redirect_to_sso_login($courseid, $msg = null, $delay = null)
     {
         $params = ['id' => $courseid];
 
         if (!empty($this->config->sso_login_url)) {
             $sso_login_url = (new moodle_url($this->config->sso_login_url, $params))->out();
-            $this->redirect($sso_login_url, $msg);
+            $this->redirect($sso_login_url, $msg, $delay);
         }
 
         return false;
@@ -273,9 +301,9 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string|null $msg
      * @throws moodle_exception
      */
-    protected function redirect($url, $msg = null)
+    protected function redirect($url, $msg = null, $delay = null)
     {
-        redirect($url, $msg);
+        redirect($url, $msg, $delay);
     }
 
     /**
@@ -312,19 +340,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     protected function get_user_by_imis_id($imis_id)
     {
         global $DB;
-
-        $user = null;
-        $auth = 'manual';
-        try {
-            $user = $DB->get_record('user', array('username' => $imis_id, 'deleted' => 0, 'suspended' => 0, 'auth' => $auth));
-            if ($user === false) {
-                $user = null;
-            }
-        } catch (dml_exception $ex) {
-            $user = null;
-        }
-
-        return $user;
+        return $DB->get_record('user', ['username' => $imis_id], '*', IGNORE_MISSING);
     }
 
     /**
@@ -347,87 +363,89 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * Update the user's Moodle profile to match their IMIS profile.
      *
-     * @param stdClass $user
+     * @param string $username
      * @param array $imis_profile
+     * @param boolean $force If true treat all fields as updateable
      * @return array
      * @throws coding_exception
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function synch_user_record($user, $imis_profile)
+    public function synch_user_record($username, $imis_profile, $force = false)
     {
         global $PAGE;
+        if ($this->config->synch_profile || $force) {
 
-        $PAGE->set_context(context_system::instance());
-        $origuser = get_complete_user_data('id', $user->id);
-        $newuser = array();
-        $this->log('imis_profile', $imis_profile);
-        $customfields = $this->get_custom_user_profile_fields();
+            $PAGE->set_context(context_system::instance());
+            $origuser = get_complete_user_data('username', $username);
+            $newuser = array();
+            $this->log('imis_profile', $imis_profile);
+            $customfields = $this->get_custom_user_profile_fields();
 
-        // Map incoming date to moodle profile fields
-        $flds = array_merge($this->userfields, $customfields);
-        $newinfo = [];
-        foreach ($flds as $fld) {
-            $val = $this->get_src_value($fld, $imis_profile);
-            if (!is_null($val)) {
-                $newinfo[$fld] = $val;
+            // Map incoming date to moodle profile fields
+            $flds = array_merge($this->userfields, $customfields);
+            $newinfo = [];
+            foreach ($flds as $fld) {
+                $val = $this->get_src_value($fld, $imis_profile);
+                if (!is_null($val)) {
+                    $newinfo[$fld] = $val;
+                }
+            }
+            $newinfo = truncate_userinfo($newinfo);
+
+            foreach ($newinfo as $key => $value) {
+
+                $iscustom = in_array($key, $customfields);
+                if (!$iscustom) {
+                    $key = strtolower($key);
+                }
+
+                // Skip fields that should never be updated or do not exist in Moodle
+                if ((!property_exists($origuser, $key) && !$iscustom)
+                    or $key === 'username'
+                    or $key === 'id'
+                    or $key === 'auth'
+                    or $key === 'mnethostid'
+                    or $key === 'deleted'
+                    or $key === 'idnumber'
+                ) {
+                    // Unknown or must not be changed.
+                    continue;
+                }
+
+                if ($iscustom) {
+                    $name = str_replace('profile_field_', '', $key);
+                    $origval = $origuser->profile[$name];
+                } else {
+                    $origval = $origuser->$key;
+                }
+
+                $update = $this->config->{'field_updatelocal_' . $key};
+                $lock = $this->config->{'field_lock_' . $key};
+                $updateable = !empty($update)
+                    && !empty($lock)
+                    && ($update === 'onlogin')
+                    && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
+                    && (string)$origval !== (string)$value;
+
+                if ($updateable || $force) {
+                    $newuser[$key] = (string)$value;
+                }
+            }
+
+            if ($newuser) {
+                $newuser['id'] = $origuser->id;
+                $newuser['timemodified'] = time();
+                user_update_user((object)$newuser, false, false);
+
+                // Save user profile data.
+                profile_save_data((object)$newuser);
+
+                // Trigger event.
+                \core\event\user_updated::create_from_userid($newuser['id'])->trigger();
             }
         }
-        $newinfo = truncate_userinfo($newinfo);
-
-        foreach ($newinfo as $key => $value) {
-
-            $iscustom = in_array($key, $customfields);
-            if (!$iscustom) {
-                $key = strtolower($key);
-            }
-
-            // Skip fields that should never be updated or do not exist in Moodle
-            if ((!property_exists($origuser, $key) && !$iscustom)
-                or $key === 'username'
-                or $key === 'id'
-                or $key === 'auth'
-                or $key === 'mnethostid'
-                or $key === 'deleted'
-                or $key === 'idnumber'
-            ) {
-                // Unknown or must not be changed.
-                continue;
-            }
-
-            if ($iscustom) {
-                $name = str_replace('profile_field_', '', $key);
-                $origval = $origuser->profile[$name];
-            } else {
-                $origval = $origuser->$key;
-            }
-
-            $update = $this->config->{'field_updatelocal_' . $key};
-            $lock = $this->config->{'field_lock_' . $key};
-            $updateable = !empty($update)
-                && !empty($lock)
-                && ($update === 'onlogin')
-                && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
-                && (string)$origval !== (string)$value;
-
-            if ($updateable) {
-                $newuser[$key] = (string)$value;
-            }
-        }
-
-        if ($newuser) {
-            $newuser['id'] = $origuser->id;
-            $newuser['timemodified'] = time();
-            user_update_user((object)$newuser, false, false);
-
-            // Save user profile data.
-            profile_save_data((object)$newuser);
-
-            // Trigger event.
-            \core\event\user_updated::create_from_userid($newuser['id'])->trigger();
-        }
-
-        return get_complete_user_data('id', $origuser->id);
+        return get_complete_user_data('username', $username);
     }
 
     /**
@@ -447,5 +465,10 @@ class auth_plugin_imisbridge extends auth_plugin_base
     protected function complete_user_login($user)
     {
         return complete_user_login($user);
+    }
+
+    protected function get_imis_profile($token)
+    {
+        return $this->get_service_proxy()->get_imis_profile($token);
     }
 }
