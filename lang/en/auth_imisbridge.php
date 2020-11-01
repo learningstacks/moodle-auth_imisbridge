@@ -62,20 +62,18 @@ $string['data_mapping_desc'] = "<p>To specify that a User Profile field is to be
 <li>Set <em>Lock Value</em> to <em>Unlocked</em>. (Note: If you set this to <em>Unlocked if empty</em>, it will be updated only once. Once a value has been entered no more updates will occur.)</li>
 </ol>";
 
-$string['no_moodle_account'] = '<h1>No active Moodle account for IMIS user {$a}.</h1>
-<p>A Moodle account must be created before the LMS can be accessed, or the option to Create New Moodle Users must be set</p>';
+$string['no_lms_user_title'] = 'LMS User Not Found';
+$string['no_lms_user_message'] = 'LMS user {$A} not found. Please contact support to resolve this issue.';
 
-$string['no_imis_account'] = '<h1>No active IMIS account.</h1>
-<p>The user does not exist in IMIS./<p>';
+$string['no_imis_user_title'] = 'IMIS User Not Found';
+$string['no_imis_user_message'] = 'IMIS user {$a} not found. Please contact support to resolve this issue.';
 
-$string['no_token'] = '<h1>User is not logged into IMIS.</h1>
-<p>Either an account does not exists or it is suspended or deleted./<p>
-<p>A Moodle account must be created before the LMS can be accessed, or the option to Create New Moodle Users must be set</p>';
+$string['deleted_lms_user_title'] = 'LMS User Has Been Deleted';
+$string['deleted_lms_user_message'] = 'LMS user {$a} has been deleted. Please contact support to resolve this issue.';
 
-$string['deleted_user'] = '<h1>User account is marked as deleted for user {$a}.</h1>
-<p>A Moodle account exists for this user but is marked as deleted. Please contact support to resolve this issue.</p>';
+$string['suspended_lms_user_title'] = 'LMS User Has Been Suspended';
+$string['suspended_lms_user_message'] = 'LMS User {$a} has been suspended. Please contact support to resolve this issue.';
 
-$string['suspended_user'] = '<h1>User account is marked as suspended for user {$a}.</h1>
-<p>A Moodle account exists for this user but is marked as deleted. Please contact support to resolve this issue.</p>';
+$string['imis_home_continue_message'] = 'Pressing the Continue button will return you to the main site.';
 
 $string['privacy:metadata'] = 'The IMISBRIDGE (SSO) authentication plugin does not store any personal data.';

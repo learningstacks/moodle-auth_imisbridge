@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MoodleUserProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.atsol.org/wsMoodle/">
+    <ResultCode xmlns="urn:ATS.Utilities">0</ResultCode>
+    <ResultMessage xmlns="urn:ATS.Utilities" />
+    <Exception xmlns="urn:ATS.Utilities">
+        <HelpLink xmlns="http://www.atsol.org/WebServices/" />
+        <Message xmlns="http://www.atsol.org/WebServices/" />
+        <Source xmlns="http://www.atsol.org/WebServices/" />
+        <StackTrace xmlns="http://www.atsol.org/WebServices/" />
+        <Data xmlns="http://www.atsol.org/WebServices/" />
+    </Exception>
+    <CustomerID>{{imisid}}</CustomerID>
+    <FirstName>{{imisid}}_firstname</FirstName>
+    <LastName>{{imisid}}_lastname</LastName>
+    <Email>{{imisid}}@atsol.org</Email>
+    <Member>true</Member>
+    <Demographics>
+        <MoodleDemographic>
+            <Field>COMPANY</Field>
+            <Value>{{imisid}}_company</Value>
+        </MoodleDemographic>
+        <MoodleDemographic>
+            <Field>COUNTRY</Field>
+            <Value />
+        </MoodleDemographic>
+        <MoodleDemographic>
+            <Field>MEMBERTYPE</Field>
+            <Value>NM</Value>
+        </MoodleDemographic>
+        <MoodleDemographic>
+            <Field>STATEPROVINCE</Field>
+            <Value />
+        </MoodleDemographic>
+        <MoodleDemographic>
+            <Field>CITY</Field>
+            <Value />
+        </MoodleDemographic>
+        <MoodleDemographic>
+            <Field>FULLNAME</Field>
+            <Value>{{imisid}} user</Value>
+        </MoodleDemographic>
+    </Demographics>
+</MoodleUserProfile>

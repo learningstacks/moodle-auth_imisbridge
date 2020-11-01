@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MoodleUserProfile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.atsol.org/wsMoodle/">
+    <ResultCode xmlns="urn:ATS.Utilities">1</ResultCode>
+    <ResultMessage xmlns="urn:ATS.Utilities">Contact with ContactId '{{imisid}} was not found.</ResultMessage>
+    <Exception xmlns="urn:ATS.Utilities">
+        <HelpLink xmlns="http://www.atsol.org/WebServices/" />
+        <Message xmlns="http://www.atsol.org/WebServices/" />
+        <Source xmlns="http://www.atsol.org/WebServices/" />
+        <StackTrace xmlns="http://www.atsol.org/WebServices/" />
+        <Data xmlns="http://www.atsol.org/WebServices/" />
+    </Exception>
+    <Member>false</Member>
+</MoodleUserProfile>
