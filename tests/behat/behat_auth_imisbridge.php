@@ -12,8 +12,10 @@ class behat_auth_imisbridge extends behat_base
      *
      * @When I visit course :shortname homepage with token :token
      * @param string $shortname shortname of the course.
-     * @param string $token The imisid token to be added to the url
-     * @throws Exception if the specified page cannot be determined.
+     * @param null|string $token The imisid token to be added to the url
+     * @throws dml_exception
+     * @throws moodle_exception
+     * @throws Exception
      */
     public function i_visit_course_homepage_with_token(string $shortname, string $token = null) {
         global $DB;

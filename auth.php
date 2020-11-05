@@ -14,6 +14,8 @@
  */
 
 
+use local_imisbridge\service_proxy;
+
 ini_set('display_errors', 1);
 defined('MOODLE_INTERNAL') || die();
 
@@ -32,11 +34,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
 {
 
     /**
-     * @var null
-     */
-    protected $logfile = null;
-
-    /**
      *
      */
     const COMPONENT_NAME = "auth_imisbridge";
@@ -52,43 +49,16 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * @param $msg
-     * @param null $data
-     */
-    protected function log($msg, $data = null)
-    {
-        if (!empty($this->logfile)) {
-            file_put_contents($this->logfile, PHP_EOL . $msg . PHP_EOL . print_r($data, true), FILE_APPEND);
-        }
-    }
-
-    /**
      * Returns true if the username and password work and false if they are
      * wrong or don't exist.
      *
-     * @param string $imis_id The username
+     * @param string $username The username
      * @param string $password The password
-     * @return void Authentication success or failure.
-     * @throws moodle_exception
+     * @return bool Authentication success or failure.
      */
-    public function user_login($imis_id, $password)
+    public function user_login($username, $password)
     {
-        $this->redirect_to_sso_login(1);
-    }
-
-    /**
-     * Updates the user's password.
-     *
-     * called when the user password is updated.
-     *
-     * @param object $user User table object  (with system magic quotes)
-     * @param string $newpassword Plaintext password (with system magic quotes)
-     * @return void result
-     * @throws moodle_exception
-     */
-    public function user_update_password($user, $newpassword)
-    {
-        $this->redirect_to_sso_login(1);
+        return false;
     }
 
     /**
@@ -150,14 +120,28 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * Confirm the new user as registered. This should normally not be used,
-     * but it may be necessary if the user auth_method is changed to manual
-     * before the user is confirmed.
-     * @param string $imis_id
-     * @param null $confirmsecret
+     * Confirm the new user as registered.
+     * @param string $username
+     * @param string|null $confirmsecret
+     * @return int
+     * @throws dml_exception
      */
-    public function user_confirm($imis_id, $confirmsecret = null)
+    public function user_confirm($username, $confirmsecret = null): int
     {
+        global $DB;
+
+        $user = get_complete_user_data('username', $username);
+
+        if (!empty($user)) {
+            if ($user->confirmed) {
+                return AUTH_CONFIRM_ALREADY;
+            } else {
+                $DB->set_field("user", "confirmed", 1, array("id"=>$user->id));
+                return AUTH_CONFIRM_OK;
+            }
+        } else  {
+            return AUTH_CONFIRM_ERROR;
+        }
     }
 
     /**
@@ -199,7 +183,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      */
     public function authenticate_user()
     {
-        global $CFG, $USER, $COURSE, $SESSION;
+        global $CFG, $USER, $SESSION;
 
         unset($SESSION->notifications);
 
@@ -284,11 +268,12 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
     /**
      * @param int $courseid After SSO login IMIS will redirect to this course
-     * @param null $msg Will be displayed to the user before the redirect occurs
+     * @param string|null $msg Will be displayed to the user before the redirect occurs
+     * @param int|null $delay
      * @return bool
      * @throws moodle_exception
      */
-    public function redirect_to_sso_login($courseid, $msg = null, $delay = null)
+    public function redirect_to_sso_login(int $courseid, string $msg = null, int $delay = null)
     {
         $params = ['id' => $courseid];
 
@@ -300,6 +285,13 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return false;
     }
 
+    /**
+     * @param string $error_code
+     * @param null $continue_url
+     * @param string $imisid
+     * @throws coding_exception
+     * @throws dml_exception
+     */
     protected function display_error(string $error_code, $continue_url = null, $imisid = '')
     {
         global $PAGE, $OUTPUT;
@@ -331,6 +323,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * Execute a redirect. This function should be stubbed during unit test.
      * @param moodle_url|string $url
      * @param string|null $msg
+     * @param null $delay
      * @throws moodle_exception
      */
     protected function redirect($url, $msg = null, $delay = null)
@@ -338,60 +331,14 @@ class auth_plugin_imisbridge extends auth_plugin_base
         redirect($url, $msg, $delay);
     }
 
-    function get_params()
-    {
-        global $CFG, $SERVER, $SESSION;
-
-        // Determine the URL to which user should be redirected upon successful authentication
-        // NOTE: $SESSION->wantsurl should always be set, but are being convervative
-        $urltogo = new moodle_url(isset($SESSION->wantsurl) ? $SESSION->wantsurl : $CFG->wwwroot);
-        unset($SESSION->wantsurl);
-
-        // Determine the courseid IMIS SSO will redirect to
-        $courseid = ($urltogo->get_path() == '/course/view.php') ? $urltogo->get_param('id') : 1;
-        if (empty($courseid)) {
-            // id param was not set (should not occur)
-            $courseid = 1;
-        }
-
-        // Get the token if present
-        $token = optional_param('token', null, PARAM_RAW);
-
-        return [$urltogo, $courseid, $token];
-    }
-
-//    /**
-//     * Obtain and decrypt the userid stored in the token parameter
-//     *
-//     * @return null|string
-//     * @throws coding_exception
-//     * @throws moodle_exception
-//     */
-//    protected function get_token()
-//    {
-//        $imis_id = null;
-//
-//        $token = optional_param('token', null, PARAM_TEXT);
-//
-//        // Token may be part of the original target URL which is now
-//        // in the session wantsurl variable
-//        if (is_null($token)) {
-//            if (isset($_SESSION['SESSION']->wantsurl)) {
-//                $url = new moodle_url($_SESSION['SESSION']->wantsurl);
-//                $token = $url->get_param('token');
-//            }
-//        }
-//
-//        return $token;
-//    }
-
     /**
      * Return a Moodle user record given an imis_id.
      *
      * @param string $imis_id
      * @return mixed|null
+     * @throws dml_exception
      */
-    protected function get_user_by_imis_id($imis_id)
+    protected function get_user_by_imis_id(string $imis_id)
     {
         global $DB;
         return $DB->get_record('user', ['username' => $imis_id], '*', IGNORE_MISSING);
@@ -403,19 +350,15 @@ class auth_plugin_imisbridge extends auth_plugin_base
      * @param string $event Either 'create' or 'login'
      * @param string $username
      * @param array $imis_profile
-     * @param boolean $force If true treat all fields as updateable
      * @return mixed False, or A {@link $USER} object.
-     * @throws coding_exception
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function synch_user_record($event, $username, $imis_profile)
+    public function synch_user_record(string $event, string $username, array $imis_profile)
     {
-        global $DB, $PAGE;
+        global $DB;
 
         if ($this->config->synch_profile) {
-//            $PAGE->set_context(context_system::instance());
-
             // Fetch current user properties
             $crntuser = [];
             $userrec = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
@@ -460,20 +403,11 @@ class auth_plugin_imisbridge extends auth_plugin_base
     /**
      * Get the IMIS Bridge services proxy.
      *
-     * @return \local_imisbridge\service_proxy
+     * @return service_proxy
      */
     protected function get_service_proxy()
     {
-        return new \local_imisbridge\service_proxy();
-    }
-
-    /**
-     * @param stdClass $user
-     * @return stdClass
-     */
-    protected function complete_user_login($user)
-    {
-        return complete_user_login($user);
+        return new service_proxy();
     }
 
     protected function get_imis_profile($token)

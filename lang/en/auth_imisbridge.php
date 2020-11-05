@@ -37,15 +37,9 @@ $string['imis_home_url_desc'] = 'URL of the main IMIS site.<br />
 // errors
 $string['plugindisabled'] = 'IMIS Bridge SSO Plugin is disabled, please re-enable';
 
-$string['unabletoauth'] = 'Unable to Authenticate User';
-$string['userdoesnotexist'] = 'User does not exist';
-$string['error401'] = 'ERROR 401';
-$string['loginthroughthemainwebsite'] = 'Please login through the Main Website';
-
 $string['synch_profile_label'] = 'Update profile on login?';
 $string['synch_profile_desc'] = "If set to <em>Yes</em>, the users Moodle profile will be updated from IMIS after each successful login.";
 $string['synch_profile_err'] = "A value is required.";
-$string['moodle_user_not_found'] = 'The Moodle user with imis_id = $a was not found';
 
 $string['create_user_label'] = 'Create new Moodle user account for authenticated IMIS user?';
 $string['create_user_desc'] = "If set to <em>Yes</em>, when a user is authenticated in IMIS but a Moodle account does not yet exist, create a new Moodle user account.";

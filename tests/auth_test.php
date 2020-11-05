@@ -19,11 +19,10 @@ namespace auth_imisbridge\tests;
 
 require_once(__DIR__ . '/../auth.php');
 
+use advanced_testcase;
 use auth_plugin_imisbridge;
 use moodle_exception;
-use coding_exception;
 use dml_exception;
-use PHPUnit\Framework\MockObject\MockObject;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -36,40 +35,13 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
-class auth_testcase extends \advanced_testcase
+class auth_testcase extends advanced_testcase
 {
-
-//    public static array $stdflds = [
-//        'firstname' => 'FirstName',
-//        'lastname' => 'LastName',
-//        'email' => 'Email'
-//    ];
-//
-//    public static array $cust_flds = [
-//        'company' => 'COMPANY'
-//    ];
-
-    protected function create_customProfile_fields(array $field_names)
-    {
-        global $DB;
-        foreach ($field_names as $field_name) {
-            $DB->insert_record('user_info_field', (object)[
-                'shortname' => $field_name,
-                'name' => $field_name,
-                'datatype' => 'text',
-                'categoryid' => 1,
-            ]);
-        }
-    }
-
     /**
-     * @param $fldlock
-     * @param $fldupdate
-     * @throws dml_exception
+     * @param array $mapspec
      */
-    public function set_field_map(array $mapspec)
+    protected function set_field_map(array $mapspec)
     {
-        global $DB;
         foreach ($mapspec as $spec) {
             list($mdl_name, $imis_name, $update_when, $lock) = $spec;
             set_config("field_map_$mdl_name", $imis_name, 'auth_imisbridge');
@@ -78,82 +50,10 @@ class auth_testcase extends \advanced_testcase
         }
     }
 
-//    /**
-//     * @param $mdluser
-//     * @param $imis_profile
-//     */
-//    public function validate_profile($mdluser, $imis_profile)
-//    {
-//        foreach (self::$stdflds as $mdlfld => $imisfld) {
-//            $this->assertEquals($imis_profile[$imisfld], $mdluser->$mdlfld, $mdlfld);
-//        }
-//        foreach (self::$cust_flds as $mdlfld => $imisfld) {
-//            $this->assertEquals($imis_profile[$imisfld], $mdluser->profile[$mdlfld], $mdlfld);
-//        }
-//    }
-
-//    /**
-//     * @param $id
-//     * @return array
-//     */
-//    public static function imis_user($id)
-//    {
-//        return [
-//            'customerid' => $id,
-//            'firstname' => "{$id}_firstname",
-//            "lastname" => "{$id}_lastname",
-//            "email" => "{$id}_email@email.com",
-//            "member" => 1,
-//            "company" => "{$id}_company"
-//        ];
-//    }
-//
-//    /**
-//     * @param $token
-//     * @param $imis_profile
-//     * @param $expect_login
-//     * @param $expect_redirect
-//     * @return MockObject
-//     */
-//    public function get_auth_mock($token, $imis_profile, $expect_login, $expect_redirect)
-//    {
-//        $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
-//            ->setMethods([
-//                'get_token',
-//                'get_imis_profile',
-//                'complete_user_login',
-//                'redirect'
-//            ])
-//            ->getMock();
-//        $auth
-//            ->expects($this->once())
-//            ->method('get_token')
-//            ->willReturn($token);
-//        if (!empty($token)) {
-//            $auth
-//                ->expects($this->once())
-//                ->method('get_imis_profile')
-//                ->with($token)
-//                ->willReturn($imis_profile);
-//        } else {
-//            $auth->expects($this->never())->method('get_imis_profile');
-//        }
-//
-//        $auth->expects($this->exactly($expect_login ? 1 : 0))->method('complete_user_login');
-//
-//        if (!empty($expect_redirect)) {
-//            $auth->expects($this->once())->method('redirect')->with($expect_redirect);
-//        } else {
-//            $auth->expects($this->never())->method('redirect');
-//        }
-//
-//        return $auth;
-//    }
-
     /**
      *
      */
-    public function setUp()
+    protected function setUp()
     {
         global $CFG;
         $this->resetAfterTest(true);
@@ -245,11 +145,11 @@ class auth_testcase extends \advanced_testcase
     /**
      * @dataProvider data_test_synch
      * @param $synch_enabled
-     * @param $force
+     * @param $event
+     * @param $updatewhen
      * @param $fldlock
-     * @param $fldupdate
-     * @param $should_update
-     * @throws coding_exception
+     * @param $crnt_value
+     * @param $expect
      * @throws dml_exception
      * @throws moodle_exception
      */

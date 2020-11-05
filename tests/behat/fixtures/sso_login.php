@@ -6,7 +6,7 @@ require_once("../../../../../lib/formslib.php");
 class imisbridge_logon_form extends moodleform
 {
     //Add elements to form
-    public function definition()
+    protected function definition()
     {
         $mform = $this->_form; // Don't forget the underscore!
         $mform->addElement('text', 'username', "Username"); // Add elements to your form
