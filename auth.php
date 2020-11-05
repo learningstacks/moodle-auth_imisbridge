@@ -214,7 +214,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         }
 
         // defaults
-        $token = null;
+        $token = optional_param('token', null, PARAM_RAW);
         $courseid = 1;
         $event = 'login';
 
