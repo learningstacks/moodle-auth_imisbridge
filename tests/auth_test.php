@@ -17,6 +17,8 @@
 
 namespace auth_imisbridge\tests;
 
+require_once(__DIR__ . '/../auth.php');
+
 use auth_plugin_imisbridge;
 use moodle_exception;
 use coding_exception;
@@ -24,7 +26,6 @@ use dml_exception;
 use PHPUnit\Framework\MockObject\MockObject;
 
 defined('MOODLE_INTERNAL') || die();
-require_once(__DIR__ . '/test_base.php');
 
 
 /**
@@ -35,14 +36,14 @@ require_once(__DIR__ . '/test_base.php');
  * @copyright 2017 Learning Stacks LLC {@link https://learningstacks.com/}
  * @license   All Rights Reserved
  */
-class auth_testcase extends test_base
+class auth_testcase extends \advanced_testcase
 {
 
     public static string $sso_login_url = "https://sso_login";
 //    public static string $sso_logout_url = "https://sso_logout";
 //    public static string $err_page_url = "https://err_page";
 
-     public static array $stdflds = [
+    public static array $stdflds = [
         'firstname' => 'FirstName',
         'lastname' => 'LastName',
         'email' => 'Email'
@@ -52,30 +53,32 @@ class auth_testcase extends test_base
         'company' => 'COMPANY'
     ];
 
+    protected function create_customProfile_fields(array $field_names)
+    {
+        global $DB;
+        foreach ($field_names as $field_name) {
+            $DB->insert_record('user_info_field', (object)[
+                'shortname' => $field_name,
+                'name' => $field_name,
+                'datatype' => 'text',
+                'categoryid' => 1,
+            ]);
+        }
+    }
+
     /**
      * @param $fldlock
      * @param $fldupdate
      * @throws dml_exception
      */
-    public function set_field_map($fldlock, $fldupdate)
+    public function set_field_map(array $mapspec)
     {
         global $DB;
-        foreach (self::$stdflds as $mdl => $imis) {
-            set_config("field_map_$mdl", $imis, 'auth_imisbridge');
-            set_config("field_lock_$mdl", $fldlock, 'auth_imisbridge');
-            set_config("field_updatelocal_$mdl", $fldupdate, 'auth_imisbridge');
-        }
-
-        foreach (self::$cust_flds as $mdlfld => $imisfld) {
-            $DB->insert_record('user_info_field', (object)[
-                'shortname' => $mdlfld,
-                'name' => $mdlfld,
-                'datatype' => 'text',
-                'categoryid' => 1,
-            ]);
-            set_config("field_map_profile_field_$mdlfld", $imisfld, 'auth_imisbridge');
-            set_config("field_lock_profile_field_$mdlfld", $fldlock, 'auth_imisbridge');
-            set_config("field_updatelocal_profile_field_$mdlfld", $fldupdate, 'auth_imisbridge');
+        foreach ($mapspec as $spec) {
+            list($mdl_name, $imis_name, $update_when, $lock) = $spec;
+            set_config("field_map_$mdl_name", $imis_name, 'auth_imisbridge');
+            set_config("field_lock_$mdl_name", $lock, 'auth_imisbridge');
+            set_config("field_updatelocal_$mdl_name", $update_when, 'auth_imisbridge');
         }
     }
 
@@ -100,12 +103,12 @@ class auth_testcase extends test_base
     public static function imis_user($id)
     {
         return [
-            'CustomerID' => $id,
-            'FirstName' => "{$id}_firstname",
-            "LastName" => "{$id}_lastname",
-            "Email" => "{$id}_email@email.com",
-            "Member" => 1,
-            "COMPANY" => "{$id}_company"
+            'customerid' => $id,
+            'firstname' => "{$id}_firstname",
+            "lastname" => "{$id}_lastname",
+            "email" => "{$id}_email@email.com",
+            "member" => 1,
+            "company" => "{$id}_company"
         ];
     }
 
@@ -185,6 +188,7 @@ class auth_testcase extends test_base
         $auth = new auth_plugin_imisbridge();
         $this->assertEquals('', $auth->config->sso_login_url);
         $this->assertEquals('', $auth->config->sso_logout_url);
+        $this->assertEquals('', $auth->config->imis_home_url);
         $this->assertEquals('1', $auth->config->synch_profile);
         $this->assertEquals('0', $auth->config->create_user);
     }
@@ -195,15 +199,19 @@ class auth_testcase extends test_base
     public function test_get_config_values()
     {
         $this->resetAfterTest(true);
-        set_config('sso_login_url', 'sso_login_url', auth_plugin_imisbridge::COMPONENT_NAME);
-        set_config('sso_logout_url', 'sso_logout_url', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('sso_login_url', 'https://sso_login.example.com', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('sso_logout_url', 'https://sso_logout.example.com', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('imis_home_url', 'https://imis.example.com', auth_plugin_imisbridge::COMPONENT_NAME);
         set_config('synch_profile', '0', auth_plugin_imisbridge::COMPONENT_NAME);
+        set_config('create_user', '1', auth_plugin_imisbridge::COMPONENT_NAME);
 
         $auth = new auth_plugin_imisbridge();
 
-        $this->assertSame('sso_login_url', $auth->config->sso_login_url);
-        $this->assertSame('sso_logout_url', $auth->config->sso_logout_url);
+        $this->assertSame('https://sso_login.example.com', $auth->config->sso_login_url);
+        $this->assertSame('https://sso_logout.example.com', $auth->config->sso_logout_url);
+        $this->assertSame('https://imis.example.com', $auth->config->imis_home_url);
         $this->assertSame('0', $auth->config->synch_profile);
+        $this->assertSame('1', $auth->config->create_user);
     }
 
     /**
@@ -250,15 +258,55 @@ class auth_testcase extends test_base
     }
 
     /**
-     *
+     * @return array
      */
-    public function test_redirect_when_no_token()
+    public function data_test_redirect_to_sso()
     {
+        return [
+            [
+                'wantsurl' => null,
+                'expect_id' => 1
+            ],
+            [
+                'wantsurl' => '',
+                'expect_id' => 1
+            ],
+            [
+                'wantsurl' => 'https://lms.example.com',
+                'expect_id' => 1,
+            ],
+            [
+                'wantsurl' => 'https://lms.example.com?id=4',
+                'expect_id' => 1,
+            ],
+            [
+                'wantsurl' => 'https://lms.example.com/course/view.php?id=4',
+                'expect_id' => 4,
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider data_test_redirect_to_sso
+     * @param $token
+     * @param $wantsurl
+     */
+    public function test_redirect_to_sso($wantsurl, $expect_id)
+    {
+        global $SESSION;
+        $sso_login_url = 'https://sso.example.com';
+        set_config('sso_login_url', $sso_login_url, auth_plugin_imisbridge::COMPONENT_NAME);
+
+        if (is_null($wantsurl)) {
+            unset($SESSION->wantsurl);
+        } else {
+            $SESSION->wantsurl = $wantsurl;
+        }
+        $expect_redirect_url = "$sso_login_url?id=$expect_id";
         $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
-            ->setMethods(['get_token', 'redirect_to_sso_login'])
+            ->setMethods(['redirect'])
             ->getMock();
-        $auth->expects($this->once())->method('get_token')->willReturn(null);
-        $auth->expects($this->once())->method('redirect_to_sso_login');
+        $auth->expects($this->once())->method('redirect')->with($expect_redirect_url);
         $auth->authenticate_user();
     }
 
@@ -269,61 +317,11 @@ class auth_testcase extends test_base
     {
         $wantsurl = 'https://test.com/wantsurl';
         return [
-            'token in param, no wantsurl' => [
-                'token' => 'activeuser',
-                'wantsurl' => null
-            ],
-            'token in param, wantsurl' => [
-                'token' => 'activeuser',
-                'wantsurl' => $wantsurl
-            ],
             'token in wantsurl' => [
                 'token' => null,
                 'wantsurl' => $wantsurl . '?token=activeuser'
             ]
         ];
-    }
-
-    /**
-     * @dataProvider data_test_authenticate_user_success
-     * @param $token
-     * @param $wantsurl
-     */
-    public function test_authenticate_user_success($token, $wantsurl)
-    {
-        global $CFG, $SESSION;
-
-        $this->resetAfterTest(true);
-        $gen = self::getDataGenerator();
-        $gen->create_user(['username' => 'activeuser', 'suspended' => 0, 'deleted' => 0]);
-
-        $_GET['token'] = $token;
-        if (!empty($wantsurl)) {
-            $SESSION->wantsurl = $wantsurl;
-            $expected_redirect = $wantsurl;
-        } else {
-            unset($SESSION->wantsurl);
-            $expected_redirect = $CFG->wwwroot;
-        }
-
-        $imis_profile = self::imis_user('activeuser');
-
-        $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
-            ->setMethods([
-                'get_imis_profile',
-                'complete_user_login',
-                'redirect'
-            ])
-            ->getMock();
-        $auth
-            ->expects($this->once())
-            ->method('get_imis_profile')
-            ->with('activeuser')
-            ->willReturn($imis_profile);
-
-        $auth->expects($this->once())->method('complete_user_login');
-        $auth->expects($this->once())->method('redirect')->with($expected_redirect);
-        $auth->authenticate_user();
     }
 
     /**
@@ -364,19 +362,23 @@ class auth_testcase extends test_base
         return [
             'no imis profile' => [
                 'token' => 'activeuser',
-                'imis_profile' => null
+                'imis_profile' => null,
+                'no_imis_user'
             ],
             'no moodle user and not create' => [
                 'token' => 'nouser',
-                'imis_profile' => self::imis_user('nouser')
+                'imis_profile' => self::imis_user('nouser'),
+                'no_lms_user'
             ],
             'deleted user' => [
                 'token' => 'deleteduser',
-                'imis_profile' => self::imis_user('deleteduser')
+                'imis_profile' => self::imis_user('deleteduser'),
+                'deleted_lms_user'
             ],
             'suspended user' => [
                 'token' => 'suspendeduser',
-                'imis_profile' => self::imis_user('suspendeduser')
+                'imis_profile' => self::imis_user('suspendeduser'),
+                'suspended_lms_user'
             ],
         ];
     }
@@ -387,9 +389,9 @@ class auth_testcase extends test_base
      * @param $imis_profile
      * @throws moodle_exception
      */
-    public function test_authenticate_user_fail($token, $imis_profile)
+    public function test_authenticate_user_fail($token, $imis_profile, $error_code)
     {
-        global $DB;
+        global $DB, $SESSION;
         $this->resetAfterTest(true);
 
         $gen = self::getDataGenerator();
@@ -402,8 +404,24 @@ class auth_testcase extends test_base
 
         set_config('create_user', 0, 'auth_imisbridge');
         set_config('sso_login_url', self::$sso_login_url, 'auth_imisbridge');
-        $auth = $this->get_auth_mock($token, $imis_profile, false, null);
-        $this->expectException('Exception');
+        $SESSION->wantsurl = "/?token={$token}";
+
+        $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
+            ->setMethods([
+                'get_imis_profile',
+                'display_error'
+            ])
+            ->getMock();
+        $auth
+            ->expects($this->once())
+            ->method('get_imis_profile')
+            ->with($token)
+            ->willReturn($imis_profile);
+        $auth
+            ->expects($this->once())
+            ->method('display_error')
+            ->with($error_code);
+
         $auth->authenticate_user();
     }
 
@@ -412,15 +430,30 @@ class auth_testcase extends test_base
      */
     public function data_test_synch()
     {
+        // event, enabled, map, when, lock, crnt, expect
         return [
-            'synch, noforce, unlocked, onlogin, expect_update' => [true, false, 'unlocked', 'onlogin', true],
-            'synch, noforce, unlocked, oncreate, expect_no_update' => [true, false, 'unlocked', 'oncreate', false],
-            'synch, noforce, unlockedifempty, onlogin, expect_no_update' => [true, false, 'unlockedifempty', 'onlogin', false],
-            'synch, noforce, unlockedifempty, oncreate, expect_no_update' => [true, false, 'unlockedifempty', 'oncreate', false],
-            'synch, noforce, locked, onlogin, expect_no_update' => [true, false, 'locked', 'onlogin', false],
-            'synch, noforce, locked, oncreate, expect_no_update' => [true, false, 'locked', 'oncreate', false],
-            'no synch, noforce, unlocked, onlogin, expect_no_update' => [false, false, 'unlocked', 'onlogin', false],
-            'no synch, force, locked, oncreate, expect_update' => [false, true, 'locked', 'oncreate', true],
+            ['synch_enabled', 'create', 'oncreate', 'unlocked', 'not_empty', 'should_update'],
+            ['synch_enabled', 'create', 'oncreate', 'unlockedifempty', 'empty', 'should_update'],
+            ['synch_enabled', 'create', 'oncreate', 'unlockedifempty', 'not_empty', 'should_not_update'],
+            ['synch_enabled', 'create', 'oncreate', 'locked', 'empty', 'should_not_update'],
+
+            ['synch_enabled', 'create', 'onlogin', 'unlocked', 'not_empty', 'should_update'],
+            ['synch_enabled', 'create', 'onlogin', 'unlockedifempty', 'empty', 'should_update'],
+            ['synch_enabled', 'create', 'onlogin', 'unlockedifempty', 'not_empty', 'should_not_update'],
+            ['synch_enabled', 'create', 'onlogin', 'locked', 'empty', 'should_not_update'],
+
+            ['synch_enabled', 'login', 'oncreate', 'unlocked', 'empty', 'should_not_update'],
+            ['synch_enabled', 'login', 'oncreate', 'empty', 'empty', 'should_not_update'],
+            ['synch_enabled', 'login', 'oncreate', 'unlockedifempty', 'empty', 'should_not_update'],
+            ['synch_enabled', 'login', 'oncreate', 'locked', 'empty', 'should_not_update'],
+
+            ['synch_enabled', 'login', 'onlogin', 'unlocked', 'not_empty', 'should_update'],
+            ['synch_enabled', 'login', 'onlogin', 'unlockedifempty', 'empty', 'should_update'],
+            ['synch_enabled', 'login', 'onlogin', 'unlockedifempty', 'not_empty', 'should_not_update'],
+            ['synch_enabled', 'login', 'onlogin', 'locked', 'empty', 'should_not_update'],
+
+            ['synch_disabled', 'create', 'onlogin', 'unlocked', 'not_empty', 'should_not_update'],
+
         ];
     }
 
@@ -435,78 +468,156 @@ class auth_testcase extends test_base
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function test_synch($synch_enabled, $force, $fldlock, $fldupdate, $should_update)
+    public function test_synch($synch_enabled, $event, $updatewhen, $fldlock, $crnt_value, $expect)
     {
+        global $DB;
+
         $this->resetAfterTest(true);
-
         $imisid = 'user1';
-        set_config('synch_profile', $synch_enabled ? 1 : 0, 'auth_imisbridge');
-        $this->set_field_map($fldlock, $fldupdate);
+        set_config('synch_profile', ($synch_enabled == 'synch_enabled') ? 1 : 0, 'auth_imisbridge');
+        $DB->insert_record('user_info_field', (object)[
+            'shortname' => 'company',
+            'name' => 'company',
+            'categoryid' => 1,
+            'datatype' => 'text'
+        ]);
+        $this->set_field_map([
+            ['firstname', 'Firstname', $updatewhen, $fldlock],
+            ['profile_field_company', 'COMPANY', $updatewhen, $fldlock]
+        ]);
 
-        $orig_imis_profile = self::imis_user('orig');
-        $new_imis_profile = self::imis_user($imisid);
-
+        $crnt_firstname = $crnt_value == 'empty' ? '' : 'crnt_firstname';
+        $crnt_company = $crnt_value == 'empty' ? '' : 'crnt_company';
         $gen = $this->getDataGenerator();
         $gen->create_user([
             'username' => $imisid,
-            'firstname' => $orig_imis_profile['FirstName'],
-            'lastname' => $orig_imis_profile['LastName'],
-            'email' => $orig_imis_profile['Email'],
-            'idnumber' => $imisid,
-            'profile_field_company' => $orig_imis_profile['COMPANY']
+            'firstname' => $crnt_firstname,
+            'profile_field_company' => $crnt_company
         ]);
-        $origuser = get_complete_user_data('username', $imisid, 1);
-        $this->validate_profile($origuser, $orig_imis_profile);
-        $auth = new auth_plugin_imisbridge();
-        $newuser = $auth->synch_user_record($imisid, $new_imis_profile, $force);
-        $this->validate_profile($newuser, $should_update ? $new_imis_profile : $orig_imis_profile);
-        $user = get_complete_user_data('username', $imisid, 1);
-        $this->validate_profile($user, $should_update ? $new_imis_profile : $orig_imis_profile);
-    }
-
-    /**
-     * @return array[]
-     */
-    public function data_test_create_user()
-    {
-        return [
-            "no create, no synch, no login, no redirect" => [false, false, false, null],
-            "create, no synch, login, redirect" => [true, false, true, 'https://target.com/']
+        $imis_profile = [
+            'customerid' => $imisid,
+            'firstname' => "new_firstname",
+            "company" => "new_company"
         ];
+
+        $auth = new auth_plugin_imisbridge();
+        $user = $auth->synch_user_record($event, $imisid, $imis_profile);
+        $userrec = $DB->get_record('user', ['username' => $imisid]);
+        $custdata = profile_user_record($user->id);
+
+        $should_update = ($expect == 'should_update');
+        $this->assertEquals($user->firstname, $userrec->firstname);
+        $this->assertEquals($user->profile['company'], $custdata->company);
+        $this->assertEquals($should_update ? 'new_firstname' : $crnt_firstname, $user->firstname);
+        $this->assertEquals($should_update ? 'new_company' : $crnt_company, $user->profile['company']);
     }
 
-    /**
-     * @dataProvider data_test_create_user
-     * @param $create_enabled
-     * @param $synch_enabled
-     * @param $expect_login
-     * @param $expect_redirect
-     * @throws dml_exception
-     */
-    public function test_create_user($create_enabled, $synch_enabled, $expect_login, $expect_redirect)
+//    /**
+//     * @return array[]
+//     */
+//    public function data_test_create_user()
+//    {
+//        return [
+//            "no create, no synch, no login, no redirect" => [false, false, false, null],
+//            "create, no synch, login, redirect" => [true, false, true, 'https://target.com/']
+//        ];
+//    }
+//
+//    /**
+//     * @dataProvider data_test_create_user
+//     * @param $create_enabled
+//     * @param $synch_enabled
+//     * @param $expect_login
+//     * @param $expect_redirect
+//     * @throws dml_exception
+//     */
+//    public function test_create_user($create_enabled, $synch_enabled, $expect_login, $expect_redirect)
+//    {
+//        global $SESSION;
+//        $this->resetAfterTest(true);
+//
+//        $imisid = 'nouser';
+//        set_config('create_user', $create_enabled ? 1 : 0, 'auth_imisbridge');
+//        set_config('synch_profile', $synch_enabled ? 1 : 0, 'auth_imisbridge');
+//        if (!empty($expect_redirect)) {
+//            $SESSION->wantsurl = $expect_redirect;
+//        }
+//
+//        $imis_profile = self::imis_user($imisid);
+//        $this->set_field_map([
+//            ['firstname', 'Firstname', 'create', 'unlocked'],
+//            ['lastname', 'lastname', 'create', 'unlocked'],
+//            ['email', 'email', 'create', 'unlocked'],
+//        ]);
+//        $auth = $this->get_auth_mock($imisid, $imis_profile, $expect_login, $expect_redirect);
+//        if (!$expect_login) {
+//            $this->expectException('Exception');
+//        }
+//        $auth->authenticate_user();
+//['customerid' => $imisid]
+//        if ($create_enabled) {
+//            $user = get_complete_user_data('username', $imisid, 1);
+//            $this->validate_profile($user, $imis_profile);
+//        }
+//
+//    }
+
+    public function test_new_user_create_disabled()
     {
         global $SESSION;
         $this->resetAfterTest(true);
 
-        $imisid = 'nouser';
-        set_config('create_user', $create_enabled ? 1 : 0, 'auth_imisbridge');
-        set_config('synch_profile', $synch_enabled ? 1 : 0, 'auth_imisbridge');
-        if (!empty($expect_redirect)) {
-            $SESSION->wantsurl = $expect_redirect;
-        }
+        $imisid = 'new_user';
+        $SESSION->wantsurl = "/?token=$imisid";
+        set_config('create_user', 0, 'auth_imisbridge');
+        $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
+            ->setMethods([
+                'get_imis_profile',
+                'display_error'
+            ])
+            ->getMock();
+        $auth
+            ->expects($this->once())
+            ->method('get_imis_profile')
+            ->with($imisid)
+            ->willReturn(['customerid' => $imisid]);
+        $auth
+            ->expects($this->once())
+            ->method('display_error')
+            ->with('no_lms_user');
 
-        $imis_profile = self::imis_user($imisid);
-        $this->set_field_map('locked', 'oncreate');
-        $auth = $this->get_auth_mock($imisid, $imis_profile, $expect_login, $expect_redirect);
-        if (!$expect_login) {
-            $this->expectException('Exception');
-        }
         $auth->authenticate_user();
+    }
 
-        if ($create_enabled) {
-            $user = get_complete_user_data('username', $imisid, 1);
-            $this->validate_profile($user, $imis_profile);
-        }
+    public function test_new_user_create_enabled_full_profile()
+    {
+        global $CFG, $SESSION;
+        $this->resetAfterTest(true);
 
+        $imisid = 'nouser';
+        $SESSION->wantsurl = "/?token=$imisid";
+        set_config('create_user', 1, 'auth_imisbridge');
+        $auth = $this->getMockBuilder(auth_plugin_imisbridge::class)
+            ->setMethods([
+                'get_imis_profile',
+                'redirect'
+            ])
+            ->getMock();
+        $auth
+            ->expects($this->once())
+            ->method('get_imis_profile')
+            ->with($imisid)
+            ->willReturn([
+                'customerid' => $imisid,
+                'firstname' => 'firstname',
+                'lastname' => 'lastname',
+                'email' => 'user@example.com'
+                ]);
+        $auth
+            ->expects($this->once())
+            ->method('redirect')
+            ->with($CFG->wwwroot . '/course/view.php?id=1');
+
+        $auth->authenticate_user();
     }
 }

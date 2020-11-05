@@ -101,9 +101,3 @@ Feature: SSO Auth with IMIS.
     When I press "Continue"
     And I wait to be redirected
     Then I should see "IMIS Home Page"
-
-  @javascript
-  Scenario: API Error.
-
-  @javascript
-  Scenario: Error calling get profile.

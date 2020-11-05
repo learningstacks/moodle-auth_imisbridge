@@ -30,13 +30,9 @@ $string['sso_logout_url_label'] = 'SSO Logout URL';
 $string['sso_logout_url_desc'] = 'The web page URL where SSO users will be directed when logging out<br />
 <i>eg. https://yourdomain.com/logout</i>';
 
-$string['redirecturllabel'] = 'Add redirect URL';
-$string['redirecturldesc'] = 'Adds redirect URL at the end of the return URL <br />
-<i>eg. https://yourdomain.com/login?redirect=http://yourmoodle.com/course</i>';
-
-$string['authmetode'] = 'Authentication Method';
-$string['authmetodelabel'] = 'Authentication methods';
-$string['authmetodedesc'] = 'If selected, SSO will log in only users with selected authentication method';
+$string['imis_home_url_label'] = 'IMIS Home URL';
+$string['imis_home_url_desc'] = 'URL of the main IMIS site.<br />
+<i>eg. https://imis.example.com</i>';
 
 // errors
 $string['plugindisabled'] = 'IMIS Bridge SSO Plugin is disabled, please re-enable';

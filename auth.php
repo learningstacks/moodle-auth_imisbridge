@@ -213,50 +213,74 @@ class auth_plugin_imisbridge extends auth_plugin_base
             return false;
         }
 
-        list($urltogo, $courseid, $token) = $this->get_params();
-        $imis_profile = empty($token) ? null : $this->get_imis_profile($token);
-        $imis_id = empty($imis_profile) ? null : $imis_profile['CustomerID'];
-        $user = empty($imis_id) ? null : $this->get_user_by_imis_id($imis_id);
+        // defaults
+        $token = null;
+        $courseid = 1;
+        $event = 'login';
+
+        if (!empty($SESSION->wantsurl)) {
+            $wantsurl = new moodle_url($SESSION->wantsurl);
+            $token = $wantsurl->get_param('token');
+            $courseid = ($wantsurl->get_path() == '/course/view.php') ? $wantsurl->get_param('id') : 1;
+        }
 
         if (empty($token)) {
-            return $this->redirect_to_sso_login($courseid, null); // Does not return if redirect succeeds
+            // keep $SESSION->wantsurl
+            $this->redirect_to_sso_login($courseid, null); // Does not return if redirect succeeds
+            return false; // should not reach this except in unit test
         }
 
+        $imis_profile = $this->get_imis_profile($token);
         if (empty($imis_profile)) {
-            return $this->display_error('no_imis_user', $this->config->sso_logout_url, $imis_id);
+            unset($SESSION->wantsurl);
+            $this->display_error('no_imis_user', $this->config->sso_logout_url, $imis_id);
+            return false; // should not reach this except in unit test
         }
 
-        if (!empty($user)) {
-
-            if ($user->deleted) {
-                return $this->display_error('deleted_lms_user', $this->config->imis_home_url, $imis_id);
+        $imis_id = $imis_profile['customerid'];
+        $user = empty($imis_id) ? null : $this->get_user_by_imis_id($imis_id);
+        if (empty($user)) {
+            if ($this->config->create_user) {
+                $user = create_user_record($imis_id, generate_password(), 'manual');
+                $event = 'create';
+            } else {
+                unset($SESSION->wantsurl);
+                $this->display_error('no_lms_user', $this->config->imis_home_url, $imis_id);
+                return false; // should not reach this except in unit test
             }
-
-            if ($user->suspended) {
-                return $this->display_error('suspended_lms_user', $this->config->imis_home_url, $imis_id);
-            }
-
-            // We have an authenticated IMIS user and a matching, active Moodle account, log in
-            if ($this->config->synch_profile) {
-                $user = $this->synch_user_record($user->username, $imis_profile);
-            }
-            $this->complete_user_login($user); // Complete setting up the $USER
-            $this->log('User logged in ', $USER);
-            return $this->redirect($urltogo);   // Send to originally requested url
         }
 
-        // We have an authenticated IMIS user but no matching Moodle account
-        if ($this->config->create_user) {
-            // Create new user account and log it in
-            $user = create_user_record($imis_id, generate_password(), 'manual');
-            $user = $this->synch_user_record($user->username, $imis_profile);
-            $this->complete_user_login($user);         // Complete setting up the $USER
-            $this->log('User logged in ', $USER);
-            return $this->redirect($urltogo);   // Send to originally requested url
+        if ($user->deleted) {
+            unset($SESSION->wantsurl);
+            $this->display_error('deleted_lms_user', $this->config->imis_home_url, $imis_id);
+            return false; // should not reach this except in unit test
         }
 
-        // Authenticated IMIS user, no moodle user, and no create option
-        return $this->display_error('no_lms_user', $this->config->imis_home_url, $imis_id);
+        if ($user->suspended) {
+            unset($SESSION->wantsurl);
+            $this->display_error('suspended_lms_user', $this->config->imis_home_url, $imis_id);
+            return false; // should not reach this except in unit test
+        }
+
+        // We have an authenticated IMIS user and a matching, active Moodle account, log in
+        $user = $this->synch_user_record($event, $imis_id, $imis_profile);
+        complete_user_login($user);
+
+        if (user_not_fully_set_up($USER, true)) {
+            $urltogo = $CFG->wwwroot . '/user/edit.php';
+            // We don't delete $SESSION->wantsurl yet, so we get there later
+        } else if (isset($SESSION->wantsurl) and (strpos($SESSION->wantsurl, $CFG->wwwroot) === 0)) {
+            $urltogo = $SESSION->wantsurl;    // Because it's an address in this site
+            unset($SESSION->wantsurl);
+        } else {
+            // No wantsurl stored or external - go to homepage
+            $urltogo = $CFG->wwwroot . '/';
+            unset($SESSION->wantsurl);
+        }
+
+        $this->redirect($urltogo);
+
+        return false; // should not reach this except in unit test
     }
 
     /**
@@ -275,22 +299,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
         }
 
         return false;
-    }
-
-    protected function redirect_to_error_page(string $error_code, $continue_url = null, $imisid = '')
-    {
-        global $SESSION;
-        $params = [
-            'title' => get_string("${error_code}_title", self::COMPONENT_NAME, $imisid),
-            'message' => get_string("${error_code}_message", self::COMPONENT_NAME, $imisid),
-            'continue_url' => $continue_url
-        ];
-
-        if (!empty($continue_url)) {
-            $params['continue_message'] = get_string("${error_code}_continue_message", self::COMPONENT_NAME);
-        }
-
-        $SESSION['auth_imisbridge_error'] = $params;
     }
 
     protected function display_error(string $error_code, $continue_url = null, $imisid = '')
@@ -321,7 +329,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * Execute a redirect. This function is added to support unit test.
+     * Execute a redirect. This function should be stubbed during unit test.
      * @param moodle_url|string $url
      * @param string|null $msg
      * @throws moodle_exception
@@ -340,7 +348,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $urltogo = new moodle_url(isset($SESSION->wantsurl) ? $SESSION->wantsurl : $CFG->wwwroot);
         unset($SESSION->wantsurl);
 
-        // Determione the courseid IMIS SSO will redirect to
+        // Determine the courseid IMIS SSO will redirect to
         $courseid = ($urltogo->get_path() == '/course/view.php') ? $urltogo->get_param('id') : 1;
         if (empty($courseid)) {
             // id param was not set (should not occur)
@@ -353,30 +361,30 @@ class auth_plugin_imisbridge extends auth_plugin_base
         return [$urltogo, $courseid, $token];
     }
 
-    /**
-     * Obtain and decrypt the userid stored in the token parameter
-     *
-     * @return null|string
-     * @throws coding_exception
-     * @throws moodle_exception
-     */
-    protected function get_token()
-    {
-        $imis_id = null;
-
-        $token = optional_param('token', null, PARAM_TEXT);
-
-        // Token may be part of the original target URL which is now
-        // in the session wantsurl variable
-        if (is_null($token)) {
-            if (isset($_SESSION['SESSION']->wantsurl)) {
-                $url = new moodle_url($_SESSION['SESSION']->wantsurl);
-                $token = $url->get_param('token');
-            }
-        }
-
-        return $token;
-    }
+//    /**
+//     * Obtain and decrypt the userid stored in the token parameter
+//     *
+//     * @return null|string
+//     * @throws coding_exception
+//     * @throws moodle_exception
+//     */
+//    protected function get_token()
+//    {
+//        $imis_id = null;
+//
+//        $token = optional_param('token', null, PARAM_TEXT);
+//
+//        // Token may be part of the original target URL which is now
+//        // in the session wantsurl variable
+//        if (is_null($token)) {
+//            if (isset($_SESSION['SESSION']->wantsurl)) {
+//                $url = new moodle_url($_SESSION['SESSION']->wantsurl);
+//                $token = $url->get_param('token');
+//            }
+//        }
+//
+//        return $token;
+//    }
 
     /**
      * Return a Moodle user record given an imis_id.
@@ -391,104 +399,60 @@ class auth_plugin_imisbridge extends auth_plugin_base
     }
 
     /**
-     * @param $fld
-     * @param $data
-     * @return string|null
-     */
-    protected function get_src_value($fld, $data)
-    {
-        if (isset($this->config->{'field_map_' . $fld})) {
-            $srcname = $this->config->{'field_map_' . $fld};
-            if (isset($data[$srcname])) {
-                return $data[$srcname];
-            }
-        }
-
-        return null;
-    }
-
-    /**
      * Update the user's Moodle profile to match their IMIS profile.
      *
+     * @param string $event Either 'create' or 'login'
      * @param string $username
      * @param array $imis_profile
      * @param boolean $force If true treat all fields as updateable
-     * @return array
+     * @return mixed False, or A {@link $USER} object.
      * @throws coding_exception
      * @throws dml_exception
      * @throws moodle_exception
      */
-    public function synch_user_record($username, $imis_profile)
+    public function synch_user_record($event, $username, $imis_profile)
     {
-        global $PAGE;
+        global $DB, $PAGE;
 
-        $PAGE->set_context(context_system::instance());
-        $origuser = get_complete_user_data('username', $username);
-        $newuser = array();
-        $this->log('imis_profile', $imis_profile);
-        $customfields = $this->get_custom_user_profile_fields();
+        if ($this->config->synch_profile) {
+//            $PAGE->set_context(context_system::instance());
 
-        // Map incoming date to moodle profile fields
-        $flds = array_merge($this->userfields, $customfields);
-        $newinfo = [];
-        foreach ($flds as $fld) {
-            $val = $this->get_src_value($fld, $imis_profile);
-            if (!is_null($val)) {
-                $newinfo[$fld] = $val;
+            // Fetch current user properties
+            $crntuser = [];
+            $userrec = $DB->get_record('user', ['username' => $username], '*', MUST_EXIST);
+            foreach ($this->userfields as $key) {
+                $crntuser[$key] = $userrec->{$key};
             }
-        }
-        $newinfo = truncate_userinfo($newinfo);
-
-        foreach ($newinfo as $key => $value) {
-
-            $iscustom = in_array($key, $customfields);
-            if (!$iscustom) {
-                $key = strtolower($key);
+            foreach (profile_user_record($userrec->id) as $key => $val) {
+                $crntuser['profile_field_' . $key] = $val;
             }
 
-            // Skip fields that should never be updated or do not exist in Moodle
-            if ((!property_exists($origuser, $key) && !$iscustom)
-                or $key === 'username'
-                or $key === 'id'
-                or $key === 'auth'
-                or $key === 'mnethostid'
-                or $key === 'deleted'
-                or $key === 'idnumber'
-            ) {
-                // Unknown or must not be changed.
-                continue;
+            // Determine which fields are to be updated
+            $updated_fields = [];
+            foreach ($crntuser as $fld => $crntval) {
+                $imisfld = empty($this->config->{'field_map_' . $fld}) ? null : strtolower($this->config->{'field_map_' . $fld});
+                $update_when = empty($this->config->{'field_updatelocal_' . $fld}) ? null : $this->config->{'field_updatelocal_' . $fld};
+                $lock = empty($this->config->{'field_lock_' . $fld}) ? null : $this->config->{'field_lock_' . $fld};
+
+                if (
+                    !empty($imisfld) // mapped
+                    && isset($imis_profile[$imisfld]) // exists
+                    && $imis_profile[$imisfld] != $crntval // value differs
+                    && ($lock == 'unlocked' || ($lock == 'unlockedifempty' && empty($crntval))) // not locked
+                    && ($update_when == 'onlogin' || $event == 'create') // matches event
+                ) {
+                    $updated_fields[$fld] = $imis_profile[$imisfld];
+                }
+
             }
 
-            if ($iscustom) {
-                $name = str_replace('profile_field_', '', $key);
-                $origval = $origuser->profile[$name];
-            } else {
-                $origval = $origuser->$key;
+            if (!empty($updated_fields)) {
+                $newuser = (object)truncate_userinfo($updated_fields);
+                $newuser->id = $userrec->id;
+                $newuser->timemodified = time();
+                profile_save_data($newuser);
+                user_update_user($newuser, false, true);
             }
-
-            $update = $this->config->{'field_updatelocal_' . $key};
-            $lock = $this->config->{'field_lock_' . $key};
-            $updateable = !empty($update)
-                && !empty($lock)
-                && ($update === 'onlogin')
-                && ($lock === 'unlocked' || ($lock === 'unlockedifempty' and empty($origval)))
-                && (string)$origval !== (string)$value;
-
-            if ($updateable || $force) {
-                $newuser[$key] = (string)$value;
-            }
-        }
-
-        if ($newuser) {
-            $newuser['id'] = $origuser->id;
-            $newuser['timemodified'] = time();
-            user_update_user((object)$newuser, false, false);
-
-            // Save user profile data.
-            profile_save_data((object)$newuser);
-
-            // Trigger event.
-            \core\event\user_updated::create_from_userid($newuser['id'])->trigger();
         }
 
         return get_complete_user_data('username', $username);

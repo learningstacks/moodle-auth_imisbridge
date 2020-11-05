@@ -39,6 +39,10 @@ if ($ADMIN->fulltree) {
         get_string('sso_logout_url_label', 'auth_imisbridge'),
         get_string('sso_logout_url_desc', 'auth_imisbridge'), '', PARAM_URL));
 
+    $settings->add(new admin_setting_configtext('auth_imisbridge/imis_home_url',
+        get_string('imis_home_url_label', 'auth_imisbridge'),
+        get_string('imis_home_url_desc', 'auth_imisbridge'), '', PARAM_URL));
+
     $settings->add(new admin_setting_configselect('auth_imisbridge/create_user',
         new lang_string('create_user_label', 'auth_imisbridge'),
         new lang_string('create_user_desc', 'auth_imisbridge'), 0, $yesno));
