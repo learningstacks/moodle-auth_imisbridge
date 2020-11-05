@@ -220,7 +220,6 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         if (!empty($SESSION->wantsurl)) {
             $wantsurl = new moodle_url($SESSION->wantsurl);
-            $token = $wantsurl->get_param('token');
             $courseid = ($wantsurl->get_path() == '/course/view.php') ? $wantsurl->get_param('id') : 1;
         }
 
@@ -233,7 +232,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
         $imis_profile = $this->get_imis_profile($token);
         if (empty($imis_profile)) {
             unset($SESSION->wantsurl);
-            $this->display_error('no_imis_user', $this->config->sso_logout_url, $imis_id);
+            $this->display_error('no_imis_user', $this->config->sso_logout_url, $token);
             return false; // should not reach this except in unit test
         }
 

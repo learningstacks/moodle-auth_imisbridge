@@ -23,8 +23,17 @@ Feature: SSO Auth with IMIS.
       | course1   | course1  | This is test course 1 |
 
   @javascript
-  Scenario: Visit homepage with no token, successfull SSO.
+  Scenario: Visit homepage with no token, successful SSO.
     When I visit "/"
+    And I wait to be redirected
+    Then I should see "SSO Login Page"
+    When I set the field "username" to "active_user"
+    And I press "Log In"
+    And I wait to be redirected
+    Then I should see "Acceptance test site"
+
+  Scenario: Try directly accessing login page.
+    When I visit "/login/index.php"
     And I wait to be redirected
     Then I should see "SSO Login Page"
     When I set the field "username" to "active_user"
@@ -101,3 +110,6 @@ Feature: SSO Auth with IMIS.
     When I press "Continue"
     And I wait to be redirected
     Then I should see "IMIS Home Page"
+
+#    Exercise prelogin and logon page hooks
+#     Missing urls (login, logout, home_

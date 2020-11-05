@@ -4,14 +4,16 @@ Feature: Ability to bypass SSO.
   As a privileged user
   I need to be able to bypass SSO and login manually.
 
-  @javascript
-  Scenario: Visit login page with SSO bypass
-    When I visit "/login/index/php?nosso"
-    And I wait to be redirected
-    Then I should see "SSO Login Page"
+  Background:
+    Given the following "users" exist:
+      | username       | suspended | deleted |
+      | active_user    | 0         | 0       |
 
   @javascript
-  Scenario: Visit course page with SSo bypass
-    When I visit "/course/view.php?id=1&nosso"
-    And I wait to be redirected
-    Then I should see "SSO Login Page"
+  Scenario: Visit login page with SSO bypass
+    When I visit "/login/index.php?nosso"
+    And I set the field "Username" to "active_user"
+    And I set the field "Password" to "active_user"
+    And I press "Log in"
+    Then I should see "You are logged in as" in the "page-footer" "region"
+    And I should see "Acceptance test site"
