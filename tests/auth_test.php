@@ -174,11 +174,12 @@ class auth_testcase extends advanced_testcase
         $crnt_firstname = $crnt_value == 'empty' ? '' : 'crnt_firstname';
         $crnt_company = $crnt_value == 'empty' ? '' : 'crnt_company';
         $gen = $this->getDataGenerator();
-        $gen->create_user([
+        $user = $gen->create_user([
             'username' => $imisid,
             'firstname' => $crnt_firstname,
-            'profile_field_company' => $crnt_company
         ]);
+        $user->profile_field_company = $crnt_company;
+        profile_save_data($user);
         $imis_profile = [
             'customerid' => $imisid,
             'firstname' => "new_firstname",
