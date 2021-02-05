@@ -1,4 +1,4 @@
-@auth @auth_imisbridge
+@moodle_imis @auth @auth_imisbridge
 Feature: SSO Auth with IMIS.
   In order to integrate with IMIS
   As a user
@@ -19,96 +19,73 @@ Feature: SSO Auth with IMIS.
       | suspended_user | 1         | 0       |
       | deleted_user   | 0         | 1       |
     And the following "courses" exist:
-      | shortname | idnumber | fullname              |
+      | shortname | idnumber | fullname |
       | course1   | course1  | This is test course 1 |
 
-  @javascript
   Scenario: Visit homepage with no token, successful SSO.
-    When I visit "/"
+    When I visit "/" with no IMIS token
     And I wait to be redirected
     Then I should see "SSO Login Page"
     When I set the field "username" to "active_user"
     And I press "Log In"
     And I wait to be redirected
-    Then I should see "Acceptance test site"
+    Then I should see "You are logged in as"
 
-  Scenario: Try directly accessing login page.
-    When I visit "/login/index.php"
+  Scenario: Redirect to SSO Login Page when not logged in.
+    When I visit "/login/index.php" with no IMIS token
     And I wait to be redirected
     Then I should see "SSO Login Page"
     When I set the field "username" to "active_user"
     And I press "Log In"
-    And I wait to be redirected
-    Then I should see "Acceptance test site"
+    Then I should see "You are logged in as"
 
-
-  @javascript
-  Scenario: Visit course homepage, no token, successful SSO.
-    When I am on the "course1" "Course" page
-    And I wait to be redirected
+  Scenario: Redirect to course after SSO login.
+    When I am on "This is test course 1" course homepage
     Then I should see "SSO Login Page"
     When I set the field "username" to "active_user"
     And I press "Log In"
-    And I wait to be redirected
-    Then I should see "This is test course 1"
+    Then I should see "You are logged in as"
+    And I should see "This is test course 1"
 
-  @javascript
-  Scenario: Visit course homepage, valid token, successful SSO
-    When I visit course "course1" homepage with token "active_user"
-    And I wait to be redirected
-    Then I should see "This is test course 1"
+  Scenario: Go to course when already logged into IMIS.
+    When I visit course "This is test course 1" homepage with token "active_user"
+    Then I should see "You are logged in as"
+    And I should see "This is test course 1"
 
-  @javascript
-  Scenario: Invalid token
-    When I visit course "course1" homepage with token "invalid_token"
-    And I wait to be redirected
+  Scenario: Display error then go to SSO Logout page when invalid token.
+    When I visit course "This is test course 1" homepage with token "invalid_token"
     Then I should see "IMIS User Not Found"
     When I press "Continue"
-    And I wait to be redirected
     Then I should see "SSO Logout Page"
 
-  @javascript
-  Scenario: No IMIS user.
-    When I visit course "course1" homepage with token "no_imis_user"
-    And I wait to be redirected
+  Scenario: Display error then go to SSO Logout page when IMIS user not found.
+    When I visit course "This is test course 1" homepage with token "no_imis_user"
     Then I should see "IMIS User Not Found"
     When I press "Continue"
-    And I wait to be redirected
     Then I should see "SSO Logout Page"
 
-  @javascript
-  Scenario: No Moodle User, no create option.
-    When I visit course "course1" homepage with token "new_user"
-    And I wait to be redirected
+  Scenario: Display error then goto IMIS home when Moodle user not found.
+    When I visit course "This is test course 1" homepage with token "new_user"
     Then I should see "LMS User Not Found"
     When I press "Continue"
-    And I wait to be redirected
     Then I should see "IMIS Home Page"
 
-  @javascript
-  Scenario: No Moodle user, create option, incomplete user setup.
+  Scenario: Go to edit user when Moodle user is not completely set up.
     Given the following config values are set as admin:
       | create_user | 1 | auth_imisbridge |
-    When I visit course "course1" homepage with token "new_user"
-    And I wait to be redirected
+    When I visit course "This is test course 1" homepage with token "new_user"
     Then I should be on "/user/edit.php"
 
-  @javascript
-  Scenario: Deleted Moodle user.
-    When I visit course "course1" homepage with token "deleted_user"
-    And I wait to be redirected
+  Scenario: Display error then goto IMIS home when Moodle user has been deleted.
+    When I visit course "This is test course 1" homepage with token "deleted_user"
     Then I should see "LMS User Not Found"
     When I press "Continue"
-    And I wait to be redirected
     Then I should see "IMIS Home Page"
 
-  @javascript
-  Scenario: Suspended Moodle user.
-    When I visit course "course1" homepage with token "suspended_user"
-    And I wait to be redirected
+  Scenario: Display error then goto IMIS home when Moodle user has been suspended
+    When I visit course "This is test course 1" homepage with token "suspended_user"
     Then I should see "LMS User Has Been Suspended"
     When I press "Continue"
-    And I wait to be redirected
     Then I should see "IMIS Home Page"
 
 #    Exercise prelogin and logon page hooks

@@ -1,4 +1,4 @@
-@auth @auth_imisbridge
+@moodle_imis @auth @auth_imisbridge
 Feature: Ability to bypass SSO.
   In order to support the LMS
   As a privileged user
@@ -14,18 +14,13 @@ Feature: Ability to bypass SSO.
       | create_user    | 0                                                        | auth_imisbridge  |
       | base_api_url   | /auth/imisbridge/tests/behat/fixtures/imisbridge_api.php | local_imisbridge |
     And the following "users" exist:
-      | username       |
-      | active_user    |
-    And the following "courses" exist:
-      | shortname | idnumber | fullname              |
-      | course1   | course1  | This is test course 1 |
+      | username |
+      | admin1   |
 
-  @javascript
-  Scenario: Visit login page with SSO bypass
-    When I visit "/login/index.php?nosso"
-    Then I should be on "/login/index.php"
-    When I set the field "Username" to "active_user"
-    And I set the field "Password" to "active_user"
+  Scenario: Visit login page with SSO bypass, not logged in
+    When I visit "/login/index.php?nosso" with no IMIS token
+    When I set the field "Username" to "admin1"
+    And I set the field "Password" to "admin1"
     When I press "Log in"
-    Then I should see "You are logged in as" in the "page-footer" "region"
-    And I should see "Acceptance test site"
+    Then I should see "You are logged in as"
+

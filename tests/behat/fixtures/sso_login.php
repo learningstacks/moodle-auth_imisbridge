@@ -33,7 +33,8 @@ if ($data = $mform->get_data()) {
     $url = new moodle_url("/course/view.php", $params);
     redirect($url, '', 0);
 } else {
-    echo("SSO Login Page");
+    echo("<p>SSO Login Page></p>");
+    echo("<p>Course ID: " . $_REQUEST['id'] . "</p>");
     $mform->display();
 }
 
