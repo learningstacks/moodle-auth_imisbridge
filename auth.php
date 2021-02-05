@@ -204,7 +204,7 @@ class auth_plugin_imisbridge extends auth_plugin_base
 
         if (!empty($SESSION->wantsurl)) {
             $wantsurl = new moodle_url($SESSION->wantsurl);
-            $courseid = ($wantsurl->get_path() == '/course/view.php') ? $wantsurl->get_param('id') : 1;
+            $courseid = ($wantsurl->get_path() == (new moodle_url('/course/view.php'))->get_path()) ? $wantsurl->get_param('id') : 1;
         }
 
         if (empty($token)) {
