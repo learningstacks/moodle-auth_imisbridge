@@ -1,4 +1,4 @@
-@moodle_imis @auth @auth_imisbridge
+@moodle-imis @auth @auth_imisbridge
 Feature: Ability to bypass SSO.
   In order to support the LMS
   As a privileged user

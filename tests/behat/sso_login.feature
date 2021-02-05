@@ -1,4 +1,4 @@
-@moodle_imis @auth @auth_imisbridge
+@moodle-imis @auth @auth_imisbridge
 Feature: SSO Auth with IMIS.
   In order to integrate with IMIS
   As a user
